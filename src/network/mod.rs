@@ -35,13 +35,17 @@ pub struct Network {
 }
 
 impl Network {
-    pub fn train(&mut self, data: Data, epochs: u32) {       
+    pub fn train(&mut self, data: &Data, epochs: u32) {       
         let mut costs = self.outputs.clone();
 
         let timestamp = Instant::now();
         
         for _ in 0..epochs {
-            for i in 0..data.inputs.len() {
+            for i in 50_000..data.inputs.len() {
+                if i % 100 == 0 {
+                    println!("{:?}", timestamp.elapsed());
+                }
+                
                 self.forward(&data.inputs[i]);
                 self.backward(&data.inputs[i], &data.targets[i], &mut costs);  
             }
@@ -50,11 +54,11 @@ impl Network {
         println!("{:?}", timestamp.elapsed());
     }
 
-    pub fn test(&mut self, data: Data) {
+    pub fn test(&mut self, data: &Data) {
         let timestamp = Instant::now();
 
-        for input in data.inputs {
-            self.forward(&input);
+        for input in &data.inputs {
+            self.forward(input);
 
             println!("{:?}", self.outputs.last().unwrap());
         }

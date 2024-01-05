@@ -11,7 +11,7 @@ impl Data {
     fn parse_csv(name: &str) -> Self {
         fn pad_targets(target: f64) -> Vec<f64> {
             let mut targets = vec![0.0; 10];
-            targets[target.floor() as usize] = 1.0;
+            targets[target as usize] = 1.0;
             
             targets
         }

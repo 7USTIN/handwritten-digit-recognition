@@ -37,15 +37,15 @@ impl Network {
         let mut writer = BufWriter::new(file);
 
         let mut write = |vec: &[f64]| {
-            let vec: Vec<String> = vec.iter().map(|num| num.to_string()).collect();
+            let vec: Vec<String> = vec.iter().map(f64::to_string).collect();
 
-            for num in vec.iter() {
-                writeln!(writer, "{:?}", num).expect("ERROR: writing into buffer");
+            for num in &vec {
+                writeln!(writer, "{num}").expect("ERROR: writing into buffer");
             }
         };
 
-        for biases in self.biases.iter() {
-            write(biases)
+        for biases in &self.biases {
+            write(biases);
         }
 
         for weights in self.weights.iter().flat_map(|weights| weights.iter()) {
@@ -70,16 +70,16 @@ impl Network {
         let mut network = Self::new(hyper_params);
         let mut index = 0;
 
-        for biases in network.biases.iter_mut() {
-            for bias in biases.iter_mut() {
+        for biases in &mut network.biases {
+            for bias in &mut *biases {
                 *bias = params[index];
                 index += 1;
             }
         }
 
-        for weights in network.weights.iter_mut() {
-            for weights in weights.iter_mut() {
-                for weight in weights.iter_mut() {
+        for weights in &mut network.weights {
+            for weights in &mut *weights {
+                for weight in &mut *weights {
                     *weight = params[index];
                     index += 1;
                 }

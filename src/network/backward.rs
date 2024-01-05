@@ -1,7 +1,7 @@
 use super::{ Network, HyperParams, Regularizer, Vec2D };
 
 impl Network {
-    fn regularization(Regularizer { l1, l2 }: &Regularizer, value: &f64) -> f64 {       
+    fn regularization(Regularizer { l1, l2 }: &Regularizer, value: f64) -> f64 {       
         l1 * value.abs() + l2 * value.powi(2)
     }
 
@@ -39,12 +39,12 @@ impl Network {
             for (weight, prev_layer_output) in weights.iter_mut().zip(self.outputs[layer - 1].iter()) {
                 *weight -= 
                     learning_rate * 
-                    (cost + Self::regularization(&regularization.weight, weight)) *
+                    (cost + Self::regularization(&regularization.weight, *weight)) *
                     slope * 
                     prev_layer_output;
             }
 
-            *bias -= learning_rate * (cost + Self::regularization(&regularization.bias, bias)) * slope;
+            *bias -= learning_rate * (cost + Self::regularization(&regularization.bias, *bias)) * slope;
         }        
     }
     
@@ -67,10 +67,10 @@ impl Network {
             let slope = (activations[0].derivative)(*net_input);
         
             for (weight, input) in weights.iter_mut().zip(inputs) {
-                *weight -= learning_rate * (cost + Self::regularization(&regularization.weight, weight)) * slope * input;
+                *weight -= learning_rate * (cost + Self::regularization(&regularization.weight, *weight)) * slope * input;
             }
            
-            *bias -= learning_rate * (cost + Self::regularization(&regularization.bias, bias)) * slope;
+            *bias -= learning_rate * (cost + Self::regularization(&regularization.bias, *bias)) * slope;
         }
     }
 }
