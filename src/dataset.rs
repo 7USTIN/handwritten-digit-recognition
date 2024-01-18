@@ -29,7 +29,11 @@ impl Data {
             })
             .collect();
 
-        let inputs: Vec2D = lines.iter().map(|line| line[1..].to_vec()).collect();
+        let inputs: Vec2D = lines
+            .iter()
+            .map(|line| line[1..].iter().map(|&value| value / 255.0).collect())
+            .collect();
+        
         let targets: Vec2D = lines.iter().map(|line| pad_targets(line[0])).collect();
 
         Self {

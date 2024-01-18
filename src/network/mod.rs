@@ -40,10 +40,10 @@ impl Network {
 
         let timestamp = Instant::now();
         
-        for _ in 0..epochs {
-            for i in 50_000..data.inputs.len() {
-                if i % 100 == 0 {
-                    println!("{:?}", timestamp.elapsed());
+        for epoch in 0..epochs {
+            for i in 0..data.inputs.len() {
+                if i % 10000 == 0 {
+                    println!("{epoch}, {i}: {:?}", timestamp.elapsed());
                 }
                 
                 self.forward(&data.inputs[i]);
@@ -57,10 +57,10 @@ impl Network {
     pub fn test(&mut self, data: &Data) {
         let timestamp = Instant::now();
 
-        for input in &data.inputs {
+        for (input, target) in data.inputs[..20].iter().zip(data.targets[..20].iter()) {
             self.forward(input);
 
-            println!("{:?}", self.outputs.last().unwrap());
+            println!("{:?} {:?}", target, self.outputs.last().unwrap());
         }
           
         println!("{:?}", timestamp.elapsed());
