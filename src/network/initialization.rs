@@ -13,6 +13,12 @@ impl Network {
         }
 
         let composition = &hyper_params.composition;
+
+        assert_eq!(
+            composition.len() - 1,
+            hyper_params.activations.len(),
+            "ERROR: wrong number of activation functions"
+        );
        
         let mut rng = rand::thread_rng();
         let mut weights = Vec::with_capacity(composition.len() - 1);
