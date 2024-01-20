@@ -57,11 +57,19 @@ impl Network {
     pub fn test(&mut self, data: &Data) {
         let timestamp = Instant::now();
 
-        for (input, target) in data.inputs[..20].iter().zip(data.targets[..20].iter()) {
+        let mut correct_count = 0.0;
+
+        for (input, target) in data.inputs.iter().zip(data.targets.iter()) {
             self.forward(input);
 
-            println!("{:?} {:?}", target, self.outputs.last().unwrap());
+            if target == self.outputs.last().unwrap() {
+                correct_count += 1.0;
+            }
         }
+
+        let accuaracy = (correct_count / data.targets.len() as f64) * 100.0;
+
+        println!("Accuaracy: {:.3}%", accuaracy);
           
         println!("{:?}", timestamp.elapsed());
     }

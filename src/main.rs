@@ -14,8 +14,8 @@ fn main() {
         activations: Activation::get(&["LEAKY_RELU_001", "LEAKY_RELU_001", "BINARY_STEP"]),
         learning_rate: 0.01,
         regularization: Regularization {
-            weight: Regularizer { l1: 0.0001, l2: 0.0001 },
-            bias: Regularizer { l1: 0.000_000_1, l2: 0.000_000_1 }
+            weight: Regularizer { l1: 0.0, l2: 0.0 },
+            bias: Regularizer { l1: 0.0, l2: 0.0 }
         }
     };
 
