@@ -48,6 +48,7 @@ pub struct Dataset {
     pub test: Data 
 }
 
+#[allow(dead_code)]
 impl Dataset {
     pub fn parse_csv() -> Self {
         Self {
@@ -55,4 +56,12 @@ impl Dataset {
             test: Data::parse_csv("test")
         }
     }
+
+    // pub fn create_rust_vecs(dataset: Self) {
+    //     let file = File::create("")
+    // }
+
+    // pub fn read_rust_vecs() -> Self {
+    //     todo!()
+    // }
 }

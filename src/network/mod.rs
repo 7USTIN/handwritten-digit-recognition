@@ -39,24 +39,20 @@ impl Network {
         let mut costs = self.outputs.clone();
 
         let timestamp = Instant::now();
-        
+       
         for epoch in 0..epochs {
-            for i in 0..data.inputs.len() {
-                if i % 10000 == 0 {
-                    println!("{epoch}, {i}: {:?}", timestamp.elapsed());
+            for index in 0..data.inputs.len() {
+                if index == 0 || (index + 1) % 10000 == 0  {
+                    println!("Epoch: {epoch}, Index: {:?}: {:.2?}", index + 1, timestamp.elapsed());
                 }
                 
-                self.forward(&data.inputs[i]);
-                self.backward(&data.inputs[i], &data.targets[i], &mut costs);  
+                self.forward(&data.inputs[index]);
+                self.backward(&data.inputs[index], &data.targets[index], &mut costs);  
             }
         }
-
-        println!("{:?}", timestamp.elapsed());
     }
 
     pub fn test(&mut self, data: &Data) {
-        let timestamp = Instant::now();
-
         let mut correct_count = 0.0;
 
         for (input, target) in data.inputs.iter().zip(data.targets.iter()) {
@@ -70,7 +66,5 @@ impl Network {
         let accuaracy = (correct_count / data.targets.len() as f64) * 100.0;
 
         println!("Accuaracy: {:.3}%", accuaracy);
-          
-        println!("{:?}", timestamp.elapsed());
     }
 }

@@ -1,13 +1,15 @@
 mod activations;
 mod dataset;
 mod network;
+mod monitor;
 
 use activations::Activation;
 use dataset::Dataset;
 use network::{ Network, HyperParams, Regularization, Regularizer };
+use monitor::monitor;
 
-fn main() {
-    let data = Dataset::parse_csv();
+fn digit_recognition() {
+    let data = monitor(|| Dataset::parse_csv(), "Parsing CSV");
 
     let hyper_params = HyperParams {
         composition: vec![data.test.inputs[0].len(), 16, 16, data.test.targets[0].len()], 
@@ -19,9 +21,13 @@ fn main() {
         }
     };
 
-    let mut network = Network::new(hyper_params);
+    let mut network = monitor(|| Network::new(hyper_params), "Initializing network");
 
-    network.train(&data.train, 10);
-    network.test(&data.test);
-    network.save();
+    monitor(|| network.train(&data.train, 2), "Training network");
+    monitor(|| network.test(&data.test), "Testing network");
+    monitor(|| network.save(), "Saving network hyperparameters");
+}
+
+fn main() {
+    monitor(|| digit_recognition(), "Handwritten Digit Recognition");
 }
