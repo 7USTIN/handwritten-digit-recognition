@@ -23,8 +23,7 @@ fn digit_recognition() {
 
     let mut network = monitor(|| Network::new(hyper_params), "Initializing network");
 
-    monitor(|| network.train(&data.train, 2), "Training network");
-    monitor(|| network.test(&data.test), "Testing network");
+    monitor(|| network.train(&data.train, &data.test, 10), "Training network");
     monitor(|| network.save(), "Saving network hyperparameters");
 }
 

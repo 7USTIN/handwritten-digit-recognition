@@ -1,5 +1,4 @@
-use std::time::Instant;
-
+use super::monitor::monitor_training;
 use super::activations::Activation;
 use super::dataset::Data;
 
@@ -35,24 +34,20 @@ pub struct Network {
 }
 
 impl Network {
-    pub fn train(&mut self, data: &Data, epochs: u32) {       
+    pub fn train(&mut self, training_data: &Data, testing_data: &Data, epochs: u32) {       
         let mut costs = self.outputs.clone();
-
-        let timestamp = Instant::now();
-       
-        for epoch in 0..epochs {
-            for index in 0..data.inputs.len() {
-                if index == 0 || (index + 1) % 10000 == 0  {
-                    println!("Epoch: {epoch}, Index: {:?}: {:.2?}", index + 1, timestamp.elapsed());
-                }
-                
-                self.forward(&data.inputs[index]);
-                self.backward(&data.inputs[index], &data.targets[index], &mut costs);  
+        
+        for epoch in 0..epochs {        
+            for index in 0..training_data.inputs.len() {                
+                self.forward(&training_data.inputs[index]);
+                self.backward(&training_data.inputs[index], &training_data.targets[index], &mut costs);  
             }
+
+            monitor_training(epoch, self.test(testing_data));            
         }
     }
 
-    pub fn test(&mut self, data: &Data) {
+    pub fn test(&mut self, data: &Data) -> f64 {
         let mut correct_count = 0.0;
 
         for (input, target) in data.inputs.iter().zip(data.targets.iter()) {
@@ -63,8 +58,6 @@ impl Network {
             }
         }
 
-        let accuaracy = (correct_count / data.targets.len() as f64) * 100.0;
-
-        println!("Accuaracy: {:.3}%", accuaracy);
+        (correct_count / data.targets.len() as f64) * 100.0
     }
 }

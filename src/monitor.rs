@@ -18,3 +18,11 @@ where
 
     return_value
 }
+
+pub fn monitor_training(epoch: u32, accuracy: f64) {
+    println!(
+        "[{:?}] Accuracy: {:.2?}%", 
+        epoch + 1,
+        accuracy
+    );
+}
