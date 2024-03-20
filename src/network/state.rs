@@ -123,61 +123,6 @@ impl Network {
             },
             hyper_params,
         }
-
-        // fn init_weights(rng: &mut ThreadRng, rows: usize, cols: usize) -> Vec2D {
-        //     (0..rows)
-        //         .map(|_| (0..cols).map(|_| rng.gen_range(-1.0..=1.0)).collect())
-        //         .collect::<Vec<Vec<f64>>>()
-        // }
-
-        // let composition = &hyper_params.composition;
-
-        // assert_eq!(
-        //     composition.len() - 1,
-        //     hyper_params.activations.len(),
-        //     "ERROR: wrong number of activation functions"
-        // );
-       
-        // let mut rng = rand::thread_rng();
-        // let mut weights = Vec::with_capacity(composition.len() - 1);
-        // let mut outputs = Vec::with_capacity(composition.len() - 1);
-
-        // for index in 1..composition.len() {
-        //     weights.push(init_weights(&mut rng, composition[index], composition[index - 1]));
-        //     outputs.push(vec![0.0; composition[index]]);
-        // }
-
-        // let mut zeroed_vector: Vec<Vec<Vec<f64>>> = Vec::with_capacity(weights.len());
-
-        // for i in 0..weights.len() {
-        //     let mut inner_vector: Vec<Vec<f64>> = Vec::with_capacity(weights[i].len());
-
-        //     for j in 0..weights[i].len() {
-        //         let zeroed_slice: Vec<f64> = vec![0.0; weights[i][j].len()];
-        //         inner_vector.push(zeroed_slice);
-        //     }
-
-        //     zeroed_vector.push(inner_vector);
-        // }
-
-        // let moment = Moment {
-        //     weights: zeroed_vector.clone(),
-        //     biases: outputs.clone()
-        // };
-        
-        // Self {
-        //     weights,
-        //     biases: outputs.clone(),
-        //     net_inputs: outputs.clone(),
-        //     outputs: outputs.clone(),
-        //     costs: outputs.clone(),
-        //     optimizer: AdamState {
-        //         iteration: 0,
-        //         moment_1: moment.clone(),
-        //         moment_2: moment.clone(),
-        //     },
-        //     hyper_params,
-        // }
     }
 
     pub fn save(&self) {        

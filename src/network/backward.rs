@@ -7,7 +7,7 @@ impl Network {
 
     fn compute_costs(&mut self, targets: &[f64]) {
         let output_layer = self.outputs.len() - 1;
-        
+
         for ((cost, output), target) in self.costs[output_layer].iter_mut()
             .zip(self.outputs[output_layer].iter())
             .zip(targets.iter()) 
@@ -76,12 +76,10 @@ impl Network {
     pub fn backward(&mut self, inputs: &[f64], targets: &[f64]) {       
         self.compute_costs(targets);        
 
-        self.backward_pass(self.outputs.len() - 1);
-        
-        for layer in (1..self.outputs.len() - 1).rev() {
+        for layer in (1..=self.outputs.len() - 1).rev() {
             self.backward_pass(layer);
         }
-        
+
         let HyperParams { activations, optimizer, regularization, .. } = &self.hyper_params;
 
         for (((((((weights, bias), net_input), cost), moment_1_weights), moment_2_weights), moment_1_bias), moment_2_bias) in self.weights[0].iter_mut()

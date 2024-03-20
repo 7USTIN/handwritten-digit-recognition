@@ -15,6 +15,8 @@ fn main() {
 fn digit_recognition() {
     let data = monitor(|| Dataset::parse_csv(), "Parsing CSV");
 
+    const EPOCHS: u32 = 10;
+
     let hyper_params = HyperParams {
         composition: vec![data.test.inputs[0].len(), 16, 16, data.test.targets[0].len()], 
         activations: Activation::get(&["LEAKY_RELU_001", "LEAKY_RELU_001", "BINARY_STEP"]),
@@ -32,6 +34,6 @@ fn digit_recognition() {
 
     let mut network = monitor(|| Network::new(hyper_params), "Initializing network");
 
-    monitor(|| network.train(&data.train, &data.test, 50), "Training network");
+    monitor(|| network.train(&data.train, &data.test, EPOCHS), "Training network");
     monitor(|| network.save(), "Saving network hyperparameters");
 }
