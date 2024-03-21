@@ -61,7 +61,7 @@ impl Network {
                 (0..composition[index])
                     .map(|_| (0..composition[index - 1]).map(|_| rng.gen_range(-1.0..=1.0)).collect())
                     .collect::<Vec2D>()            
-            )           
+            );
         }
 
         random_3d_vec
@@ -70,8 +70,8 @@ impl Network {
     fn zeros_2d_vec(composition: &[usize]) -> Vec2D {
         let mut zeros_2d_vec = Vec::with_capacity(composition.len() - 1);
 
-        for index in 1..composition.len() {
-            zeros_2d_vec.push(vec![0.0; composition[index]])
+        for len in composition.iter().skip(1) {
+            zeros_2d_vec.push(vec![0.0; *len]);
         }
 
         zeros_2d_vec
@@ -84,10 +84,10 @@ impl Network {
             let mut layer = Vec::with_capacity(composition[index]);
 
             for _ in 0..composition[index] {
-                layer.push(vec![0.0; composition[index - 1]])
+                layer.push(vec![0.0; composition[index - 1]]);
             }
 
-            zeros_3d_vec.push(layer)
+            zeros_3d_vec.push(layer);
         }
 
         zeros_3d_vec
@@ -107,19 +107,19 @@ impl Network {
         let random_3d_vec = Self::random_3d_vec(&mut rand::thread_rng(), composition);
 
         let moment = Moment {
-            weights: zeros_3d_vec.clone(),
+            weights: zeros_3d_vec,
             biases: zeros_2d_vec.clone()
         };
         Self {
-            weights: random_3d_vec.clone(),
+            weights: random_3d_vec,
             biases: zeros_2d_vec.clone(),
             net_inputs: zeros_2d_vec.clone(),
             outputs: zeros_2d_vec.clone(),
-            costs: zeros_2d_vec.clone(),
+            costs: zeros_2d_vec,
             optimizer: AdamState {
                 iteration: 0,
                 moment_1: moment.clone(),
-                moment_2: moment.clone(),
+                moment_2: moment,
             },
             hyper_params,
         }

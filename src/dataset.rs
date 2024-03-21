@@ -8,14 +8,14 @@ pub struct Data {
 }
 
 impl Data {
-    fn parse_csv(name: &str) -> Self {
-        fn pad_targets(target: f64) -> Vec<f64> {
-            let mut targets = vec![0.0; 10];
-            targets[target as usize] = 1.0;
-            
-            targets
-        }
+    fn pad_targets(target: f64) -> Vec<f64> {
+        let mut targets = vec![0.0; 10];
+        targets[target as usize] = 1.0;
+        
+        targets
+    }
 
+    fn parse_csv(name: &str) -> Self {
         let file_name = format!("dataset/mnist_{name}.csv");
         let file = File::open(file_name).expect("ERROR: opening file");
         let reader = BufReader::new(file);
@@ -34,7 +34,7 @@ impl Data {
             .map(|line| line[1..].iter().map(|&value| value / 255.0).collect())
             .collect();
         
-        let targets: Vec2D = lines.iter().map(|line| pad_targets(line[0])).collect();
+        let targets: Vec2D = lines.iter().map(|line| Self::pad_targets(line[0])).collect();
 
         Self {
             inputs,
