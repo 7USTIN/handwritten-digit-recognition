@@ -9,7 +9,7 @@ pub struct AdamHyperParams {
     pub alpha: f64,
     pub beta_1: f64,
     pub beta_2: f64,
-    pub epsilon: f64,
+    pub epsilon: f64
 }
 
 pub struct Regularizer {
