@@ -10,11 +10,19 @@ impl Network {
         for epoch in 0..epochs {          
             let timestamp = Instant::now();
         
-            for index in 0..training_data.inputs.len() {                
-                self.optimizer.iteration += 1;
+            for (inputs, targets) in training_data.inputs.chunks(self.hyper_params.batch_size)
+                .zip(training_data.targets.chunks(self.hyper_params.batch_size))
+            {                
+                for (inputs, targets) in inputs.iter()
+                    .zip(targets.iter())
+                {                
+                    self.optimizer.iteration += 1;
 
-                self.forward(&training_data.inputs[index]);
-                self.backward(&training_data.inputs[index], &training_data.targets[index]);  
+                    self.forward(inputs);
+                    self.backward(inputs, targets);  
+                }                
+                
+                self.batch_update(inputs.len() as f64);
             }
             
             duration += timestamp.elapsed();

@@ -26,10 +26,38 @@ impl Network {
         }    
     }
 
+    pub fn batch_update(&mut self, chunk_size: f64) {
+        for (weights, weight_updates) in self.weights.iter_mut()
+            .zip(self.batch.weight_updates.iter_mut())
+        {
+            for (weights, weight_updates) in weights.iter_mut()
+                .zip(weight_updates.iter_mut())
+            {
+                for (weight, weight_update) in weights.iter_mut()
+                    .zip(weight_updates.iter_mut())
+                {
+                    *weight = *weight_update / chunk_size;
+                    *weight_update = 0.0;
+                }
+            }
+        }
+        
+        for (biases, bias_updates) in self.biases.iter_mut()
+            .zip(self.batch.bias_updates.iter_mut())
+        {
+            for (bias, bias_update) in biases.iter_mut()
+                .zip(bias_updates.iter_mut()) 
+            {
+                *bias = *bias_update / chunk_size;
+                *bias_update = 0.0;
+            }
+        }
+    }
+
     fn backward_pass(&mut self, layer: usize) {
         let HyperParams { activations, optimizer, regularization, .. } = &self.hyper_params;
 
-        for (((((((weights, bias), net_input), cost), moment_1_weights), moment_2_weights), moment_1_bias), moment_2_bias) in self.weights[layer].iter_mut()
+        for (((((((((weights, bias), net_input), cost), moment_1_weights), moment_2_weights), moment_1_bias), moment_2_bias), weight_updates), bias_update) in self.weights[layer].iter_mut()
             .zip(self.biases[layer].iter_mut())
             .zip(self.net_inputs[layer].iter())
             .zip(self.costs[layer].iter())
@@ -37,13 +65,16 @@ impl Network {
             .zip(self.optimizer.moment_2.weights[layer].iter_mut())
             .zip(self.optimizer.moment_1.biases[layer].iter_mut())
             .zip(self.optimizer.moment_2.biases[layer].iter_mut())
+            .zip(self.batch.weight_updates[layer].iter_mut())
+            .zip(self.batch.bias_updates[layer].iter_mut())
         {
             let slope = (activations[layer].derivative)(*net_input);
                        
-            for (((weight, prev_layer_output), moment_1_weight), moment_2_weight) in weights.iter_mut()
+            for ((((weight, prev_layer_output), moment_1_weight), moment_2_weight), weight_update) in weights.iter_mut()
                 .zip(self.outputs[layer - 1].iter())
                 .zip(moment_1_weights.iter_mut())
                 .zip(moment_2_weights.iter_mut())
+                .zip(weight_updates.iter_mut())
             {
                 let gradient = 
                     (cost + Self::regularization(&regularization.weights, *weight)) *
@@ -56,7 +87,7 @@ impl Network {
                 let corrected_moment_1_weight = *moment_1_weight / (1.0 - optimizer.beta_1.powi(self.optimizer.iteration));
                 let corrected_moment_2_weight = *moment_2_weight / (1.0 - optimizer.beta_2.powi(self.optimizer.iteration));
 
-                *weight -= optimizer.alpha * corrected_moment_1_weight / (corrected_moment_2_weight.sqrt() + optimizer.epsilon);
+                *weight_update += *weight - optimizer.alpha * corrected_moment_1_weight / (corrected_moment_2_weight.sqrt() + optimizer.epsilon);
             }
 
             let gradient = 
@@ -69,7 +100,7 @@ impl Network {
             let corrected_moment_1_bias = *moment_1_bias / (1.0 - optimizer.beta_1.powi(self.optimizer.iteration));
             let corrected_moment_2_bias = *moment_2_bias / (1.0 - optimizer.beta_2.powi(self.optimizer.iteration));
 
-            *bias -= optimizer.alpha * corrected_moment_1_bias / (corrected_moment_2_bias.sqrt() + optimizer.epsilon);
+            *bias_update += *bias - optimizer.alpha * corrected_moment_1_bias / (corrected_moment_2_bias.sqrt() + optimizer.epsilon);
         }        
     }
     
@@ -82,7 +113,7 @@ impl Network {
 
         let HyperParams { activations, optimizer, regularization, .. } = &self.hyper_params;
 
-        for (((((((weights, bias), net_input), cost), moment_1_weights), moment_2_weights), moment_1_bias), moment_2_bias) in self.weights[0].iter_mut()
+        for (((((((((weights, bias), net_input), cost), moment_1_weights), moment_2_weights), moment_1_bias), moment_2_bias), weight_updates), bias_update) in self.weights[0].iter_mut()
             .zip(self.biases[0].iter_mut())
             .zip(self.net_inputs[0].iter())
             .zip(self.costs[0].iter())
@@ -90,13 +121,16 @@ impl Network {
             .zip(self.optimizer.moment_2.weights[0].iter_mut())
             .zip(self.optimizer.moment_1.biases[0].iter_mut())
             .zip(self.optimizer.moment_2.biases[0].iter_mut())
+            .zip(self.batch.weight_updates[0].iter_mut())
+            .zip(self.batch.bias_updates[0].iter_mut())
         {
             let slope = (activations[0].derivative)(*net_input);
         
-            for (((weight, input), moment_1_weight), moment_2_weight) in weights.iter_mut()
+            for ((((weight, input), moment_1_weight), moment_2_weight), weight_update) in weights.iter_mut()
                 .zip(inputs)
                 .zip(moment_1_weights.iter_mut())
                 .zip(moment_2_weights.iter_mut())
+                .zip(weight_updates.iter_mut())
             {
                 let gradient = 
                     (cost + Self::regularization(&regularization.weights, *weight)) *
@@ -109,7 +143,7 @@ impl Network {
                 let corrected_moment_1_weight = *moment_1_weight / (1.0 - optimizer.beta_1.powi(self.optimizer.iteration));
                 let corrected_moment_2_weight = *moment_2_weight / (1.0 - optimizer.beta_2.powi(self.optimizer.iteration));
 
-                *weight -= optimizer.alpha * corrected_moment_1_weight / (corrected_moment_2_weight.sqrt() + optimizer.epsilon);
+                *weight_update += *weight - optimizer.alpha * corrected_moment_1_weight / (corrected_moment_2_weight.sqrt() + optimizer.epsilon);
             }          
 
             let gradient = 
@@ -122,7 +156,7 @@ impl Network {
             let corrected_moment_1_bias = *moment_1_bias / (1.0 - optimizer.beta_1.powi(self.optimizer.iteration));
             let corrected_moment_2_bias = *moment_2_bias / (1.0 - optimizer.beta_2.powi(self.optimizer.iteration));
 
-            *bias -= optimizer.alpha * corrected_moment_1_bias / (corrected_moment_2_bias.sqrt() + optimizer.epsilon);
+            *bias_update += *bias - optimizer.alpha * corrected_moment_1_bias / (corrected_moment_2_bias.sqrt() + optimizer.epsilon);
         }
     }
 }

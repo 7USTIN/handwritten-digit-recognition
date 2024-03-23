@@ -15,7 +15,7 @@ fn main() {
 fn digit_recognition() {
     let data = monitor(|| Dataset::parse_csv(), "Parsing CSV");
 
-    const EPOCHS: u32 = 10;
+    const EPOCHS: u32 = 50;
 
     let hyper_params = HyperParams {
         composition: vec![data.test.inputs[0].len(), 16, 16, data.test.targets[0].len()], 
@@ -30,6 +30,7 @@ fn digit_recognition() {
             beta_2: 0.999,
             epsilon: 1e-8,
         },
+        batch_size: 4,
     };
 
     let mut network = monitor(|| Network::new(hyper_params), "Initializing network");

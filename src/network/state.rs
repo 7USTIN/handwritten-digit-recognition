@@ -26,7 +26,8 @@ pub struct HyperParams {
     pub composition: Vec<usize>,
     pub activations: Vec<Activation>,
     pub regularization: Regularization,
-    pub optimizer: AdamHyperParams
+    pub optimizer: AdamHyperParams,
+    pub batch_size: usize,
 }
 
 #[derive(Clone)]
@@ -41,6 +42,11 @@ pub struct AdamState {
     pub moment_2: Moment
 }
 
+pub struct Batch {
+    pub weight_updates: Vec<Vec2D>,
+    pub bias_updates: Vec2D
+}
+
 pub struct Network {
     pub weights: Vec<Vec2D>,
     pub biases: Vec2D,
@@ -48,6 +54,7 @@ pub struct Network {
     pub outputs: Vec2D,
     pub costs: Vec2D,
     pub optimizer: AdamState,
+    pub batch: Batch,
     pub hyper_params: HyperParams,
 }
 
@@ -107,7 +114,7 @@ impl Network {
         let random_3d_vec = Self::random_3d_vec(&mut rand::thread_rng(), composition);
 
         let moment = Moment {
-            weights: zeros_3d_vec,
+            weights: zeros_3d_vec.clone(),
             biases: zeros_2d_vec.clone()
         };
         Self {
@@ -115,11 +122,15 @@ impl Network {
             biases: zeros_2d_vec.clone(),
             net_inputs: zeros_2d_vec.clone(),
             outputs: zeros_2d_vec.clone(),
-            costs: zeros_2d_vec,
+            costs: zeros_2d_vec.clone(),
             optimizer: AdamState {
                 iteration: 0,
                 moment_1: moment.clone(),
                 moment_2: moment,
+            },
+            batch: Batch {
+                weight_updates:  zeros_3d_vec,
+                bias_updates: zeros_2d_vec,
             },
             hyper_params,
         }
