@@ -8,11 +8,11 @@ pub struct Data {
 }
 
 impl Data {
-    fn pad_targets(target: f64) -> Vec<f64> {
-        let mut targets = vec![0.0; 10];
-        targets[target as usize] = 1.0;
+    pub fn one_hot_encode(num: usize) -> Vec<f64> {
+        let mut vec = vec![0.0; 10];
+        vec[num] = 1.0;
         
-        targets
+        vec
     }
 
     fn parse_csv(name: &str) -> Self {
@@ -34,7 +34,7 @@ impl Data {
             .map(|line| line[1..].iter().map(|&value| value / 255.0).collect())
             .collect();
         
-        let targets: Vec2D = lines.iter().map(|line| Self::pad_targets(line[0])).collect();
+        let targets: Vec2D = lines.iter().map(|line| Self::one_hot_encode(line[0] as usize)).collect();
 
         Self {
             inputs,

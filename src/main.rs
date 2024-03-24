@@ -15,11 +15,11 @@ fn main() {
 fn digit_recognition() {
     let data = monitor(|| Dataset::parse_csv(), "Parsing CSV");
 
-    const EPOCHS: u32 = 50;
+    const EPOCHS: u32 = 3;
 
     let hyper_params = HyperParams {
         composition: vec![data.test.inputs[0].len(), 16, 16, data.test.targets[0].len()], 
-        activations: Activation::get(&["LEAKY_RELU_001", "LEAKY_RELU_001", "BINARY_STEP"]),
+        activations: Activation::get(&["LEAKY_RELU_001", "LEAKY_RELU_001", "LEAKY_RELU_001"]),
         regularization: Regularization {
             weights: Regularizer { l1: 1e-7, l2:  1e-6},
             biases: Regularizer { l1: 1e-9, l2: 1e-8 }
