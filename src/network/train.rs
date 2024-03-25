@@ -45,8 +45,9 @@ impl Network {
                 .map(|(index, _)| index)
                 .unwrap();
 
-            if Data::one_hot_encode(predicted_output_index) == *target {
-                correct_count += 1.0;
+            match Data::one_hot_encode(predicted_output_index) == *target {
+                true => correct_count += 1.0,
+                false => ()
             }
 
             for (output, target) in self.outputs.last().unwrap().iter().zip(target) {
