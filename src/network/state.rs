@@ -137,7 +137,7 @@ impl Network {
     }
 
     pub fn save(&self) {        
-        let file = File::create("hyper_params.txt").expect("ERROR: opening file");
+        let file = File::create("parameters.txt").expect("ERROR: opening file");
         let mut writer = BufWriter::new(file);
 
         let mut write = |vec: &[f64]| {
@@ -160,7 +160,7 @@ impl Network {
     }
 
     pub fn load(hyper_params: HyperParams) -> Self {
-        let file = File::open("hyper_params.txt").expect("ERROR: opening file");
+        let file = File::open("parameters.txt").expect("ERROR: opening file");
         let reader = BufReader::new(file);
 
         let params: Vec<f64> = reader.lines()

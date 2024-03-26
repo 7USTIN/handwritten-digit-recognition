@@ -32,7 +32,7 @@ fn main() {
     let mut network = monitor(|| Network::new(hyper_params), "Initializing network");
 
     monitor(|| network.train(&data.train, &data.test, EPOCHS), "Training network");
-    monitor(|| network.save(), "Saving network hyperparameters");
+    monitor(|| network.save(), "Saving network parameters");
 
     statistics(&mut network, &data.test);
 }
