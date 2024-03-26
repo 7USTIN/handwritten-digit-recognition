@@ -31,7 +31,7 @@ impl Network {
         }
     }
 
-    fn test(&mut self, data: &Data) -> (f64, f64) {
+    pub fn test(&mut self, data: &Data) -> (f64, f64) {
         let mut correct_count = 0.0;
         let mut cost = 0.0;
 

@@ -6,16 +6,12 @@ mod monitor;
 use activations::Activation;
 use dataset::Dataset;
 use network::state::{ Network, HyperParams, Regularization, Regularizer, AdamHyperParams };
-use monitor::monitor;
+use monitor::{ monitor, statistics };
 
 fn main() {
-    monitor(|| digit_recognition(), "Handwritten Digit Recognition");
-}
-
-fn digit_recognition() {
     let data = monitor(|| Dataset::parse_csv(), "Parsing CSV");
 
-    const EPOCHS: u32 = 3;
+    const EPOCHS: u32 = 1;
 
     let hyper_params = HyperParams {
         composition: vec![data.test.inputs[0].len(), 16, 16, data.test.targets[0].len()], 
@@ -37,4 +33,6 @@ fn digit_recognition() {
 
     monitor(|| network.train(&data.train, &data.test, EPOCHS), "Training network");
     monitor(|| network.save(), "Saving network hyperparameters");
+
+    statistics(&mut network, &data.test);
 }
