@@ -1,7 +1,9 @@
-use std::{ fs::File, io::{ BufWriter, Write, BufReader, BufRead} };
+#![allow(dead_code)]
+
 use crate::activations::Activation;
 
 use rand::{ Rng, rngs::ThreadRng };
+use std::{ fs::File, io::{ BufWriter, Write, BufReader, BufRead} };
 
 pub type Vec2D = Vec<Vec<f64>>;
 
@@ -58,7 +60,6 @@ pub struct Network {
     pub hyper_params: HyperParams,
 }
 
-#[allow(dead_code)]
 impl Network {   
     fn random_3d_vec(rng: &mut ThreadRng, composition: &[usize]) -> Vec<Vec2D> {
         let mut random_3d_vec = Vec::with_capacity(composition.len() - 1);

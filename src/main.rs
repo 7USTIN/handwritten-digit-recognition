@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 mod activations;
 mod dataset;
 mod network;

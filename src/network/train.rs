@@ -1,6 +1,7 @@
 use crate::monitor::monitor_training;
 use crate::dataset::Data;
 use super::state::Network;
+
 use std::time::{ Instant, Duration };
 
 impl Network {

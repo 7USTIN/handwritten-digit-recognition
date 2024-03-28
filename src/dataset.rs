@@ -1,6 +1,6 @@
-use std::{ fs::File, io::{ BufReader, BufRead} };
-
 use super::network::state::Vec2D;
+
+use std::{ fs::File, io::{ BufReader, BufRead} };
 
 pub struct Data {
     pub inputs: Vec2D,
