@@ -54,6 +54,7 @@ pub fn monitor_training(epochs: u32, epoch: u32, (accuracy, cost): (f64, f64), d
     );
 
     if epoch + 1 == epochs {
+        println!();
         print_centered(format!("Avg. Duration: {:.2?}\n", duration / epochs));
     }
 }
@@ -82,13 +83,14 @@ pub fn statistics(network: &mut Network, data: &Data) {
     print_subheader("Regularization");
 
     print_table(
-        format!("L1 Weights: {:e}", regularization.weights.l1),
-        format!("L1 Biases: {:e}", regularization.biases.l1)
+        format!("L1 Weights: {:e}", regularization.elastic_net.weights.l1),
+        format!("L1 Biases: {:e}", regularization.elastic_net.biases.l1)
     );
     print_table(
-        format!("L2 Weights: {:e}", regularization.weights.l2),
-        format!("L2 Biases: {:e}", regularization.biases.l2)
+        format!("L2 Weights: {:e}", regularization.elastic_net.weights.l2),
+        format!("L2 Biases: {:e}", regularization.elastic_net.biases.l2)
     );
+    println!("{:<50}\n", format!("Max Norm Constraint: {}", regularization.max_norm_constraint));
     println!();
 
     print_subheader("Adam Optimizer");
@@ -110,7 +112,7 @@ pub fn statistics(network: &mut Network, data: &Data) {
         format!("Iterations: {}", network.optimizer.iteration)
     );
     print_table(
-        format!("Accuracy: {}%", accuracy),
+        format!("Accuracy: {:.2}%", accuracy),
         format!("Avg. Cost: {:.3?}", avg_cost)
     );
     println!();

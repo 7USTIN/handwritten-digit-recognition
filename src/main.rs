@@ -7,7 +7,14 @@ mod monitor;
 
 use activations::Activation;
 use dataset::Dataset;
-use network::state::{ Network, HyperParams, Regularization, Regularizer, AdamHyperParams };
+use network::state::{ 
+    Network, 
+    HyperParams, 
+    Regularization, 
+    ElasticNetRegularization, 
+    ElasticNetRegularizer, 
+    AdamHyperParams 
+};
 use monitor::{ monitor, statistics, showcase };
 
 fn main() {
@@ -19,8 +26,11 @@ fn main() {
         composition: vec![data.test.inputs[0].len(), 16, 16, data.test.targets[0].len()], 
         activations: Activation::get(&["LEAKY_RELU_001", "LEAKY_RELU_001", "LEAKY_RELU_001"]),
         regularization: Regularization {
-            weights: Regularizer { l1: 1e-7, l2:  1e-6},
-            biases: Regularizer { l1: 1e-9, l2: 1e-8 }
+            elastic_net: ElasticNetRegularization {
+                weights: ElasticNetRegularizer { l1: 1e-7, l2:  1e-6 },
+                biases: ElasticNetRegularizer { l1: 0.0, l2: 0.0 }
+            },
+            max_norm_constraint: 8.0
         },
         optimizer: AdamHyperParams {
             alpha: 0.005,
@@ -31,12 +41,12 @@ fn main() {
         batch_size: 4,
     };
 
-    // let mut network = monitor(|| Network::new(hyper_params), "Initializing network");
+    let mut network = monitor(|| Network::new(hyper_params), "Initializing network");
 
-    // monitor(|| network.train(&data.train, &data.test, EPOCHS), "Training network");
-    // monitor(|| network.save(), "Saving network parameters");
+    monitor(|| network.train(&data.train, &data.test, EPOCHS), "Training network");
+    monitor(|| network.save(), "Saving network parameters");
 
-    let mut network = Network::load(hyper_params);
+    // let mut network = Network::load(hyper_params);
 
     statistics(&mut network, &data.test);
     showcase(&mut network, &data.test, 2)

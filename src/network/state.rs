@@ -14,14 +14,19 @@ pub struct AdamHyperParams {
     pub epsilon: f64
 }
 
-pub struct Regularizer {
+pub struct ElasticNetRegularizer {
     pub l1: f64,
     pub l2: f64
 }
 
+pub struct ElasticNetRegularization {
+    pub weights: ElasticNetRegularizer,
+    pub biases: ElasticNetRegularizer    
+}
+
 pub struct Regularization {
-    pub weights: Regularizer,
-    pub biases: Regularizer
+    pub elastic_net: ElasticNetRegularization,
+    pub max_norm_constraint: f64
 }
 
 pub struct HyperParams {
