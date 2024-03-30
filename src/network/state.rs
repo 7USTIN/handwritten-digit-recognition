@@ -8,10 +8,23 @@ use std::{ fs::File, io::{ BufWriter, Write, BufReader, BufRead} };
 pub type Vec2D = Vec<Vec<f64>>;
 
 pub struct AdamHyperParams {
-    pub alpha: f64,
     pub beta_1: f64,
     pub beta_2: f64,
     pub epsilon: f64
+}
+
+#[derive(Debug)]
+pub enum DecayMethod {
+    Step(u32),
+    Exponential,
+    Inverse,
+    None
+}
+
+pub struct LearningRate {
+    pub alpha: f64,
+    pub decay_method: DecayMethod,
+    pub decay_rate: f64,
 }
 
 pub struct ElasticNetRegularizer {
@@ -33,6 +46,7 @@ pub struct HyperParams {
     pub composition: Vec<usize>,
     pub activations: Vec<Activation>,
     pub regularization: Regularization,
+    pub learning_rate: LearningRate,
     pub optimizer: AdamHyperParams,
     pub batch_size: usize,
 }

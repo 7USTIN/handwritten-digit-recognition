@@ -64,7 +64,7 @@ pub fn statistics(network: &mut Network, data: &Data) {
 
     print_header("Neural Network Statistics");
 
-    let HyperParams { composition, regularization, optimizer, batch_size, .. } = &network.hyper_params;
+    let HyperParams { composition, regularization, learning_rate, optimizer, batch_size, .. } = &network.hyper_params;
 
     print_subheader("Composition");
 
@@ -96,7 +96,7 @@ pub fn statistics(network: &mut Network, data: &Data) {
     print_subheader("Adam Optimizer");
 
     print_table(
-        format!("Alpha: {}", optimizer.alpha),
+        format!("Alpha: {}", learning_rate.alpha),
         format!("Epsilon: {:e}", optimizer.epsilon)
     );
     print_table(
@@ -110,6 +110,10 @@ pub fn statistics(network: &mut Network, data: &Data) {
     print_table(
         format!("Batch Size: {}", batch_size),
         format!("Iterations: {}", network.optimizer.iteration)
+    );
+    print_table(
+        format!("LR Decay Method: {:#?}", learning_rate.decay_method),
+        format!("Decay Rate: {}", learning_rate.decay_rate)
     );
     print_table(
         format!("Accuracy: {:.2}%", accuracy),

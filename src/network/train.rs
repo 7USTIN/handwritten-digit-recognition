@@ -1,10 +1,54 @@
 use crate::monitor::monitor_training;
 use crate::dataset::Data;
-use super::state::Network;
+use super::state::{ Network, LearningRate, DecayMethod };
 
 use std::time::{ Instant, Duration };
 
 impl Network {
+    fn batch_update(&mut self, chunk_size: f64) {
+        for (weights, weight_updates) in self.weights.iter_mut()
+            .zip(self.batch.weight_updates.iter_mut())
+        {
+            for (weights, weight_updates) in weights.iter_mut()
+                .zip(weight_updates.iter_mut())
+            {
+                for (weight, weight_update) in weights.iter_mut()
+                    .zip(weight_updates.iter_mut())
+                {
+                    *weight = *weight_update / chunk_size;
+                    *weight_update = 0.0;
+                }
+            }
+        }
+        
+        for (biases, bias_updates) in self.biases.iter_mut()
+            .zip(self.batch.bias_updates.iter_mut())
+        {
+            for (bias, bias_update) in biases.iter_mut()
+                .zip(bias_updates.iter_mut()) 
+            {
+                *bias = *bias_update / chunk_size;
+                *bias_update = 0.0;
+            }
+        }
+    }
+
+    fn learning_rate_decay(&mut self, epoch: u32) {
+        let LearningRate { alpha, decay_method, decay_rate } = &mut self.hyper_params.learning_rate;
+        
+        match decay_method {
+            DecayMethod::Step(decay_step) => {
+                match epoch % *decay_step == 0 {
+                    true => *alpha *= *decay_rate,
+                    false => ()
+                }
+            },
+            DecayMethod::Exponential => *alpha *= decay_rate.powi(epoch as i32),
+            DecayMethod::Inverse => *alpha /= 1.0 + *decay_rate * epoch as f64,
+            DecayMethod::None => (),
+        }
+    }
+
     pub fn train(&mut self, training_data: &Data, testing_data: &Data, epochs: u32) {
         let mut duration = Duration::ZERO;
         
@@ -25,6 +69,8 @@ impl Network {
                 
                 self.batch_update(inputs.len() as f64);
             }
+
+            self.learning_rate_decay(epoch);
             
             duration += timestamp.elapsed();
 

@@ -11,6 +11,8 @@ use network::state::{
     Network, 
     HyperParams, 
     Regularization, 
+    LearningRate,
+    DecayMethod,
     ElasticNetRegularization, 
     ElasticNetRegularizer, 
     AdamHyperParams 
@@ -20,7 +22,7 @@ use monitor::{ monitor, statistics, showcase };
 fn main() {
     let data = monitor(|| Dataset::parse_csv(), "Parsing CSV");
 
-    const EPOCHS: u32 = 10;
+    const EPOCHS: u32 = 20;
 
     let hyper_params = HyperParams {
         composition: vec![data.test.inputs[0].len(), 16, 16, data.test.targets[0].len()], 
@@ -32,8 +34,12 @@ fn main() {
             },
             max_norm_constraint: 8.0
         },
+        learning_rate: LearningRate {
+            alpha: 0.01,
+            decay_method: DecayMethod::Exponential,
+            decay_rate: 0.9
+        },
         optimizer: AdamHyperParams {
-            alpha: 0.005,
             beta_1: 0.9,
             beta_2: 0.999,
             epsilon: 1e-8,

@@ -1,34 +1,6 @@
 use super::state::{ Network, HyperParams, ElasticNetRegularizer };
 
 impl Network {
-    pub fn batch_update(&mut self, chunk_size: f64) {
-        for (weights, weight_updates) in self.weights.iter_mut()
-            .zip(self.batch.weight_updates.iter_mut())
-        {
-            for (weights, weight_updates) in weights.iter_mut()
-                .zip(weight_updates.iter_mut())
-            {
-                for (weight, weight_update) in weights.iter_mut()
-                    .zip(weight_updates.iter_mut())
-                {
-                    *weight = *weight_update / chunk_size;
-                    *weight_update = 0.0;
-                }
-            }
-        }
-        
-        for (biases, bias_updates) in self.biases.iter_mut()
-            .zip(self.batch.bias_updates.iter_mut())
-        {
-            for (bias, bias_update) in biases.iter_mut()
-                .zip(bias_updates.iter_mut()) 
-            {
-                *bias = *bias_update / chunk_size;
-                *bias_update = 0.0;
-            }
-        }
-    }
-
     fn regularization(ElasticNetRegularizer { l1, l2 }: &ElasticNetRegularizer, value: f64) -> f64 {       
         l1 * value.abs() + l2 * value.powi(2)
     }
@@ -61,7 +33,7 @@ impl Network {
     }
 
     fn backward_pass(&mut self, layer: usize, inputs: &[f64]) {
-        let HyperParams { activations, optimizer, regularization, .. } = &self.hyper_params;
+        let HyperParams { activations, learning_rate, optimizer, regularization, .. } = &self.hyper_params;
 
         let prev_layer_output = match layer == 0 {
             true => inputs,
@@ -80,7 +52,7 @@ impl Network {
             .zip(self.batch.bias_updates[layer].iter_mut())
         {
             let slope = (activations[layer].derivative)(*net_input);
-            let current_weight_l2_norm = Self::compute_l2_norm(&weights);
+            let current_weight_l2_norm = Self::compute_l2_norm(weights);
                        
             for ((((weight, prev_layer_output), moment_1_weight), moment_2_weight), weight_update) in weights.iter_mut()
                 .zip(prev_layer_output)
@@ -99,7 +71,7 @@ impl Network {
                 let corrected_moment_1_weight = *moment_1_weight / (1.0 - optimizer.beta_1.powi(self.optimizer.iteration));
                 let corrected_moment_2_weight = *moment_2_weight / (1.0 - optimizer.beta_2.powi(self.optimizer.iteration));
 
-                *weight_update += *weight - optimizer.alpha * corrected_moment_1_weight / (corrected_moment_2_weight.sqrt() + optimizer.epsilon);
+                *weight_update += *weight - learning_rate.alpha * corrected_moment_1_weight / (corrected_moment_2_weight.sqrt() + optimizer.epsilon);
 
                 match current_weight_l2_norm > regularization.max_norm_constraint {
                     true => *weight_update *= regularization.max_norm_constraint / current_weight_l2_norm,
@@ -117,7 +89,7 @@ impl Network {
             let corrected_moment_1_bias = *moment_1_bias / (1.0 - optimizer.beta_1.powi(self.optimizer.iteration));
             let corrected_moment_2_bias = *moment_2_bias / (1.0 - optimizer.beta_2.powi(self.optimizer.iteration));
 
-            *bias_update += *bias - optimizer.alpha * corrected_moment_1_bias / (corrected_moment_2_bias.sqrt() + optimizer.epsilon);
+            *bias_update += *bias - learning_rate.alpha * corrected_moment_1_bias / (corrected_moment_2_bias.sqrt() + optimizer.epsilon);
         }        
     }
     
