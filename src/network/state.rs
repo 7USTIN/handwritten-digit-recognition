@@ -17,14 +17,23 @@ pub struct AdamHyperParams {
 pub enum DecayMethod {
     Step(u32),
     Exponential,
-    Inverse,
-    None
+    Inverse
+}
+
+pub struct LearningRateDecay {
+    pub method: DecayMethod,
+    pub rate: f64    
+}
+
+pub struct LearningRateRestart {
+    pub interval: u32,
+    pub alpha: f64,
 }
 
 pub struct LearningRate {
     pub alpha: f64,
-    pub decay_method: DecayMethod,
-    pub decay_rate: f64,
+    pub restart: Option<LearningRateRestart>,
+    pub decay: Option<LearningRateDecay>
 }
 
 pub struct ElasticNetRegularizer {

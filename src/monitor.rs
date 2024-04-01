@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::dataset::Data;
-use super::network::state::{ Network, HyperParams };
+use super::network::state::{ Network, HyperParams, LearningRate };
 
 use std::time::{ Instant, Duration };
 use rand::{ thread_rng, seq::SliceRandom };
@@ -43,11 +43,14 @@ where
     return_value
 }
 
-pub fn monitor_training(epochs: u32, epoch: u32, (accuracy, cost): (f64, f64), duration: Duration) {
+pub fn monitor_training(
+    epochs: u32, epoch: u32, learning_rate: f64, (accuracy, cost): (f64, f64), duration: Duration
+) {
     print_centered(
         format!(
-            "[{:0>2?}] Accuracy: {:.2?}%, Avg. Cost: {:.3?}", 
+            "[{:0>2?}] LR: {:.2e}, Acc.: {:.2}%, Cost: {:.3}", 
             epoch + 1,
+            learning_rate,
             accuracy,
             cost
         )
@@ -65,6 +68,7 @@ pub fn statistics(network: &mut Network, data: &Data) {
     print_header("Neural Network Statistics");
 
     let HyperParams { composition, regularization, learning_rate, optimizer, batch_size, .. } = &network.hyper_params;
+    let LearningRate { alpha, decay, restart } = learning_rate;
 
     print_subheader("Composition");
 
@@ -96,7 +100,7 @@ pub fn statistics(network: &mut Network, data: &Data) {
     print_subheader("Adam Optimizer");
 
     print_table(
-        format!("Alpha: {}", learning_rate.alpha),
+        format!("Alpha: {:e}", alpha),
         format!("Epsilon: {:e}", optimizer.epsilon)
     );
     print_table(
@@ -111,13 +115,24 @@ pub fn statistics(network: &mut Network, data: &Data) {
         format!("Batch Size: {}", batch_size),
         format!("Iterations: {}", network.optimizer.iteration)
     );
-    print_table(
-        format!("LR Decay Method: {:#?}", learning_rate.decay_method),
-        format!("Decay Rate: {}", learning_rate.decay_rate)
-    );
+
+    if let Some(decay) = &decay {
+        print_table(
+            format!("LR Decay: {:#?}", decay.method),
+            format!("Decay Rate: {:e}", decay.rate)
+        );        
+    }
+
+    if let Some(restart) = &restart {
+        print_table(
+            format!("LR Restart Interval: {}", restart.interval),
+            format!("Restart LR: {:e}", restart.alpha)
+        );
+    }
+
     print_table(
         format!("Accuracy: {:.2}%", accuracy),
-        format!("Avg. Cost: {:.3?}", avg_cost)
+        format!("Cost: {:.3?}", avg_cost)
     );
     println!();
 

@@ -12,6 +12,8 @@ use network::state::{
     HyperParams, 
     Regularization, 
     LearningRate,
+    LearningRateRestart,
+    LearningRateDecay,
     DecayMethod,
     ElasticNetRegularization, 
     ElasticNetRegularizer, 
@@ -36,8 +38,14 @@ fn main() {
         },
         learning_rate: LearningRate {
             alpha: 0.01,
-            decay_method: DecayMethod::Exponential,
-            decay_rate: 0.9
+            restart: Some(LearningRateRestart {
+                interval: 10,
+                alpha: 0.001
+            }),
+            decay: Some(LearningRateDecay {
+                method: DecayMethod::Exponential,
+                rate: 0.9
+            }),
         },
         optimizer: AdamHyperParams {
             beta_1: 0.9,

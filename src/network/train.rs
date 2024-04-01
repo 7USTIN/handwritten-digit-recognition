@@ -34,18 +34,35 @@ impl Network {
     }
 
     fn learning_rate_decay(&mut self, epoch: u32) {
-        let LearningRate { alpha, decay_method, decay_rate } = &mut self.hyper_params.learning_rate;
+        let LearningRate { alpha, decay, restart } = &mut self.hyper_params.learning_rate;
+
+        let adjusted_epoch;
+
+        if let Some(restart) = &restart {
+            match (epoch + 1) % restart.interval == 0 {
+                true => {
+                    *alpha = restart.alpha;
+                    return;
+                },
+                false => ()
+            }   
+
+            adjusted_epoch = (epoch + 1) % restart.interval;
+        } else {
+            adjusted_epoch = epoch + 1;
+        }
         
-        match decay_method {
-            DecayMethod::Step(decay_step) => {
-                match epoch % *decay_step == 0 {
-                    true => *alpha *= *decay_rate,
-                    false => ()
-                }
-            },
-            DecayMethod::Exponential => *alpha *= decay_rate.powi(epoch as i32),
-            DecayMethod::Inverse => *alpha /= 1.0 + *decay_rate * epoch as f64,
-            DecayMethod::None => (),
+        if let Some(decay) = &decay {
+            match decay.method {
+                DecayMethod::Step(decay_step) => {
+                    match adjusted_epoch % decay_step == 0 {
+                        true => *alpha *= decay.rate,
+                        false => ()
+                    }
+                },
+                DecayMethod::Exponential => *alpha *= decay.rate.powi(adjusted_epoch as i32),
+                DecayMethod::Inverse => *alpha /= 1.0 + decay.rate * adjusted_epoch as f64,
+            }            
         }
     }
 
@@ -69,12 +86,14 @@ impl Network {
                 
                 self.batch_update(inputs.len() as f64);
             }
-
-            self.learning_rate_decay(epoch);
             
             duration += timestamp.elapsed();
 
-            monitor_training(epochs, epoch, self.test(testing_data), duration);
+            monitor_training(
+                epochs, epoch, self.hyper_params.learning_rate.alpha, self.test(testing_data), duration
+            );
+
+            self.learning_rate_decay(epoch);
         }
     }
 
@@ -103,8 +122,8 @@ impl Network {
         }
 
         let accuracy = (correct_count / data.targets.len() as f64) * 100.0;
-        let avg_cost = cost / self.outputs.len() as f64 / data.inputs.len() as f64;        
+        let cost = cost / data.inputs.len() as f64;        
 
-        (accuracy, avg_cost)
+        (accuracy, cost)
     }
 }
