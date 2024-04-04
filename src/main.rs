@@ -5,8 +5,8 @@ mod dataset;
 mod network;
 mod monitor;
 
-use activations::Activation;
 use dataset::Dataset;
+use activations::{ Activation, ActivationType::* };
 use network::state::{ 
     Network, 
     HyperParams, 
@@ -28,7 +28,7 @@ fn main() {
 
     let hyper_params = HyperParams {
         composition: vec![data.test.inputs[0].len(), 16, 16, data.test.targets[0].len()], 
-        activations: Activation::get(&["LEAKY_RELU_001", "LEAKY_RELU_001", "LEAKY_RELU_001"]),
+        activations: Activation::get(&[LeakyRelu, LeakyRelu, LeakyRelu]),
         regularization: Regularization {
             elastic_net: ElasticNetRegularization {
                 weights: ElasticNetRegularizer { l1: 1e-7, l2:  1e-6 },
@@ -56,7 +56,7 @@ fn main() {
     };
 
     let mut network = monitor(|| Network::new(hyper_params), "Initializing network");
-
+    
     monitor(|| network.train(&data.train, &data.test, EPOCHS), "Training network");
     monitor(|| network.save(), "Saving network parameters");
 

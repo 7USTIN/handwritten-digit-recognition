@@ -146,6 +146,7 @@ impl Network {
             weights: zeros_3d_vec.clone(),
             biases: zeros_2d_vec.clone()
         };
+
         Self {
             weights: random_3d_vec,
             biases: zeros_2d_vec.clone(),
