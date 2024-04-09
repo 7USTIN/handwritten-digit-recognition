@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 mod activations;
 mod dataset;
 mod network;
@@ -7,24 +5,13 @@ mod monitor;
 
 use dataset::Dataset;
 use activations::{ Activation, ActivationType::* };
-use network::state::{ 
-    Network, 
-    HyperParams, 
-    Regularization, 
-    LearningRate,
-    LearningRateRestart,
-    LearningRateDecay,
-    DecayMethod,
-    ElasticNetRegularization, 
-    ElasticNetRegularizer, 
-    AdamHyperParams 
-};
+use network::state::*;
 use monitor::{ monitor, statistics, showcase };
 
 fn main() {
     let data = monitor(|| Dataset::parse_csv(), "Parsing CSV");
 
-    const EPOCHS: u32 = 20;
+    const EPOCHS: u32 = 10;
 
     let hyper_params = HyperParams {
         composition: vec![data.test.inputs[0].len(), 16, 16, data.test.targets[0].len()], 
@@ -33,6 +20,10 @@ fn main() {
             elastic_net: ElasticNetRegularization {
                 weights: ElasticNetRegularizer { l1: 1e-7, l2:  1e-6 },
                 biases: ElasticNetRegularizer { l1: 0.0, l2: 0.0 }
+            },
+            dropout_rate: DropoutRate {
+                input_layer: 0.0,
+                hidden_layer: 0.0
             },
             max_norm_constraint: 8.0
         },

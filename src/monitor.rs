@@ -115,27 +115,41 @@ pub fn statistics(network: &mut Network, data: &Data) {
         format!("Batch Size: {}", batch_size),
         format!("Iterations: {}", network.optimizer.iteration)
     );
+    println!();
+
+    print_subheader("Dropout Rate");
+    
+    print_table(
+        format!("Input Layer: {}%", regularization.dropout_rate.input_layer * 100.0),
+        format!("Hidden Layers {}%", regularization.dropout_rate.hidden_layer * 100.0)
+    );
+    println!();
+    
+    print_subheader("Learning Rate");
 
     if let Some(decay) = &decay {
         print_table(
-            format!("LR Decay: {:#?}", decay.method),
+            format!("Decay Method: {:#?}", decay.method),
             format!("Decay Rate: {:e}", decay.rate)
         );        
     }
 
     if let Some(restart) = &restart {
         print_table(
-            format!("LR Restart Interval: {}", restart.interval),
-            format!("Restart LR: {:e}", restart.alpha)
+            format!("Restart Interval: {}", restart.interval),
+            format!("Restart Value: {:e}", restart.alpha)
         );
     }
+    println!();
+    
+    print_subheader("Evaluation");
 
     print_table(
         format!("Accuracy: {:.2}%", accuracy),
         format!("Cost: {:.3?}", avg_cost)
     );
     println!();
-
+    
     println!();
     print_end();
 }

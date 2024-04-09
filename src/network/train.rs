@@ -1,10 +1,58 @@
 use crate::monitor::monitor_training;
 use crate::dataset::Data;
-use super::state::{ Network, LearningRate, DecayMethod };
+use super::state::{ Network, Regularization, LearningRate, DecayMethod, HyperParams };
 
 use std::time::{ Instant, Duration };
+use rand::{ thread_rng, Rng };
 
 impl Network {
+    fn generate_dropout_mask(&mut self) {
+        let HyperParams { regularization, .. } = &self.hyper_params;
+        let Regularization { dropout_rate, .. } = regularization;
+        
+        let mut rng = thread_rng();
+
+        for dropout in self.dropout_mask[0].iter_mut() {
+            *dropout = rng.gen_bool(1.0 - dropout_rate.input_layer) as u16 as f64;
+        }
+
+        for layer in 1..self.dropout_mask.len() - 1 {
+            for neuron in 0..self.dropout_mask[layer].len() {
+                self.dropout_mask[layer][neuron] = rng.gen_bool(1.0 - dropout_rate.hidden_layer) as u16 as f64;
+            }
+        }
+    }
+
+    fn set_all_active_dropout_mask(&mut self) {
+        for layer in 0..self.dropout_mask.len() - 1 {
+            for neuron in 0..self.dropout_mask[layer].len() {
+                self.dropout_mask[layer][neuron] = 1.0;
+            }
+        }
+    }
+
+    fn inverse_dropout(&mut self) {
+        let HyperParams { regularization, .. } = &self.hyper_params;
+        let Regularization { dropout_rate, .. } = regularization;
+        
+        for (layer, weights) in self.weights.iter_mut().enumerate() {
+            let factor = match layer {
+                0 => 1.0 / (1.0 - dropout_rate.input_layer),
+                _ => 1.0 / (1.0 - dropout_rate.hidden_layer),
+            };
+
+            for weights in weights.iter_mut() {
+                for weight in weights.iter_mut() {
+                    *weight *= factor;
+                }
+            }
+
+            for bias in self.biases[layer].iter_mut() {
+                *bias *= factor;
+            }
+        }
+    }
+    
     fn batch_update(&mut self, chunk_size: f64) {
         for (weights, weight_updates) in self.weights.iter_mut()
             .zip(self.batch.weight_updates.iter_mut())
@@ -66,7 +114,7 @@ impl Network {
         }
     }
 
-    pub fn train(&mut self, training_data: &Data, testing_data: &Data, epochs: u32) {
+    pub fn train(&mut self, training_data: &Data, testing_data: &Data, epochs: u32) {       
         let mut duration = Duration::ZERO;
         
         for epoch in 0..epochs {          
@@ -75,6 +123,8 @@ impl Network {
             for (inputs, targets) in training_data.inputs.chunks(self.hyper_params.batch_size)
                 .zip(training_data.targets.chunks(self.hyper_params.batch_size))
             {                
+                self.generate_dropout_mask();
+                
                 for (inputs, targets) in inputs.iter()
                     .zip(targets.iter())
                 {                
@@ -95,6 +145,9 @@ impl Network {
 
             self.learning_rate_decay(epoch);
         }
+
+        self.set_all_active_dropout_mask();
+        self.inverse_dropout();
     }
 
     pub fn test(&mut self, data: &Data) -> (f64, f64) {

@@ -46,8 +46,14 @@ pub struct ElasticNetRegularization {
     pub biases: ElasticNetRegularizer    
 }
 
+pub struct DropoutRate {
+    pub input_layer: f64,
+    pub hidden_layer: f64,
+}
+
 pub struct Regularization {
     pub elastic_net: ElasticNetRegularization,
+    pub dropout_rate: DropoutRate,
     pub max_norm_constraint: f64
 }
 
@@ -84,6 +90,7 @@ pub struct Network {
     pub outputs: Vec2D,
     pub costs: Vec2D,
     pub optimizer: AdamState,
+    pub dropout_mask: Vec2D,
     pub batch: Batch,
     pub hyper_params: HyperParams,
 }
@@ -103,10 +110,10 @@ impl Network {
         random_3d_vec
     }
 
-    fn zeros_2d_vec(composition: &[usize]) -> Vec2D {
+    fn zeros_2d_vec(composition: &[usize], skip: usize) -> Vec2D {
         let mut zeros_2d_vec = Vec::with_capacity(composition.len() - 1);
 
-        for len in composition.iter().skip(1) {
+        for len in composition.iter().skip(skip) {
             zeros_2d_vec.push(vec![0.0; *len]);
         }
 
@@ -138,7 +145,7 @@ impl Network {
             "ERROR: wrong number of activation functions"
         );
 
-        let zeros_2d_vec = Self::zeros_2d_vec(composition);
+        let zeros_2d_vec = Self::zeros_2d_vec(composition, 1);
         let zeros_3d_vec = Self::zeros_3d_vec(composition);
         let random_3d_vec = Self::random_3d_vec(&mut rand::thread_rng(), composition);
 
@@ -146,6 +153,14 @@ impl Network {
             weights: zeros_3d_vec.clone(),
             biases: zeros_2d_vec.clone()
         };
+
+        let mut dropout_mask = Self::zeros_2d_vec(composition, 0);
+
+        if let Some(output_layer) = dropout_mask.last_mut() {
+            for probability in output_layer.iter_mut() {
+                *probability = 1.0;
+            }
+        }
 
         Self {
             weights: random_3d_vec,
@@ -158,6 +173,7 @@ impl Network {
                 moment_1: moment.clone(),
                 moment_2: moment,
             },
+            dropout_mask,
             batch: Batch {
                 weight_updates:  zeros_3d_vec,
                 bias_updates: zeros_2d_vec,
