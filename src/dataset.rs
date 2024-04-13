@@ -45,13 +45,23 @@ impl Data {
 
 pub struct Dataset {
     pub train: Data,
+    pub validation: Data,
     pub test: Data 
 }
 
 impl Dataset {
-    pub fn parse_csv() -> Self {
+    pub fn new() -> Self {        
+        let training_data = Data::parse_csv("train");
+
+        let total_lines = training_data.targets.len();
+        let validation_start_index = (total_lines as f64 * 0.8) as usize;
+
+        let (train_inputs, validation_inputs) = training_data.inputs.split_at(validation_start_index);
+        let (train_targets, validation_targets) = training_data.targets.split_at(validation_start_index);
+
         Self {
-            train: Data::parse_csv("train"),
+            train: Data { inputs: train_inputs.to_owned(), targets: train_targets.to_owned() },
+            validation: Data { inputs: validation_inputs.to_owned(), targets: validation_targets.to_owned() },
             test: Data::parse_csv("test")
         }
     }

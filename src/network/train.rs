@@ -114,14 +114,14 @@ impl Network {
         }
     }
 
-    pub fn train(&mut self, training_data: &Data, testing_data: &Data, epochs: u32) {       
+    pub fn train(&mut self, train_data: &Data, validation_data: &Data, epochs: u32) {       
         let mut duration = Duration::ZERO;
         
         for epoch in 0..epochs {          
             let timestamp = Instant::now();
         
-            for (inputs, targets) in training_data.inputs.chunks(self.hyper_params.batch_size)
-                .zip(training_data.targets.chunks(self.hyper_params.batch_size))
+            for (inputs, targets) in train_data.inputs.chunks(self.hyper_params.batch_size)
+                .zip(train_data.targets.chunks(self.hyper_params.batch_size))
             {                
                 self.generate_dropout_mask();
                 
@@ -140,7 +140,7 @@ impl Network {
             duration += timestamp.elapsed();
 
             monitor_training(
-                epochs, epoch, self.hyper_params.learning_rate.alpha, self.test(testing_data), duration
+                epochs, epoch, self.hyper_params.learning_rate.alpha, self.test(validation_data), duration
             );
 
             self.learning_rate_decay(epoch);
