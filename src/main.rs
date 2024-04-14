@@ -11,8 +11,6 @@ use monitor::{ monitor, statistics, showcase };
 fn main() {
     let data = monitor(|| Dataset::new(), "Parsing CSV");
 
-    const EPOCHS: u32 = 10;
-
     let hyper_params = HyperParams {
         composition: vec![data.test.inputs[0].len(), 16, 16, data.test.targets[0].len()], 
         activations: Activation::get(&[LeakyRelu, LeakyRelu, LeakyRelu]),
@@ -44,14 +42,18 @@ fn main() {
             epsilon: 1e-8,
         },
         batch_size: 4,
+        early_stopping: EarlyStopping {
+            stability_threshold: 0.005,
+            patience: 15
+        }
     };
 
     let mut network = monitor(|| Network::new(hyper_params), "Initializing network");
     
-    monitor(|| network.train(&data.train, &data.validation, EPOCHS), "Training network");
+    monitor(|| network.train(&data.train, &data.validation), "Training network");
     monitor(|| network.save(), "Saving network parameters");
 
-    // let mut network = Network::load(hyper_params);
+    // let mut network = monitor(|| Network::load(hyper_params), "Loading network parameters");
 
     statistics(&mut network, &data.test);
     showcase(&mut network, &data.test, 2)

@@ -7,6 +7,11 @@ use std::{ fs::File, io::{ BufWriter, Write, BufReader, BufRead} };
 
 pub type Vec2D = Vec<Vec<f64>>;
 
+pub struct EarlyStopping {
+    pub stability_threshold: f64,
+    pub patience: usize
+}
+
 pub struct AdamHyperParams {
     pub beta_1: f64,
     pub beta_2: f64,
@@ -64,6 +69,7 @@ pub struct HyperParams {
     pub learning_rate: LearningRate,
     pub optimizer: AdamHyperParams,
     pub batch_size: usize,
+    pub early_stopping: EarlyStopping
 }
 
 #[derive(Clone)]
@@ -92,6 +98,7 @@ pub struct Network {
     pub optimizer: AdamState,
     pub dropout_mask: Vec2D,
     pub batch: Batch,
+    pub performance: Vec<f64>,
     pub hyper_params: HyperParams,
 }
 
@@ -178,6 +185,7 @@ impl Network {
                 weight_updates:  zeros_3d_vec,
                 bias_updates: zeros_2d_vec,
             },
+            performance: Vec::new(),
             hyper_params,
         }
     }

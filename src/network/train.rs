@@ -1,14 +1,13 @@
 use crate::monitor::monitor_training;
 use crate::dataset::Data;
-use super::state::{ Network, Regularization, LearningRate, DecayMethod, HyperParams };
+use super::state::*;
 
 use std::time::{ Instant, Duration };
 use rand::{ thread_rng, Rng };
 
 impl Network {
     fn generate_dropout_mask(&mut self) {
-        let HyperParams { regularization, .. } = &self.hyper_params;
-        let Regularization { dropout_rate, .. } = regularization;
+        let Regularization { dropout_rate, .. } = &self.hyper_params.regularization;
         
         let mut rng = thread_rng();
 
@@ -32,8 +31,7 @@ impl Network {
     }
 
     fn inverse_dropout(&mut self) {
-        let HyperParams { regularization, .. } = &self.hyper_params;
-        let Regularization { dropout_rate, .. } = regularization;
+        let Regularization { dropout_rate, .. } = &self.hyper_params.regularization;
         
         for (layer, weights) in self.weights.iter_mut().enumerate() {
             let factor = match layer {
@@ -81,13 +79,11 @@ impl Network {
         }
     }
 
-    fn learning_rate_decay(&mut self, epoch: u32) {
+    fn learning_rate_decay(&mut self, epoch: &mut u32) {
         let LearningRate { alpha, decay, restart } = &mut self.hyper_params.learning_rate;
 
-        let adjusted_epoch;
-
         if let Some(restart) = &restart {
-            match (epoch + 1) % restart.interval == 0 {
+            match *epoch % restart.interval == 0 {
                 true => {
                     *alpha = restart.alpha;
                     return;
@@ -95,30 +91,53 @@ impl Network {
                 false => ()
             }   
 
-            adjusted_epoch = (epoch + 1) % restart.interval;
-        } else {
-            adjusted_epoch = epoch + 1;
+            *epoch %= restart.interval;
         }
         
         if let Some(decay) = &decay {
             match decay.method {
                 DecayMethod::Step(decay_step) => {
-                    match adjusted_epoch % decay_step == 0 {
+                    match *epoch % decay_step == 0 {
                         true => *alpha *= decay.rate,
                         false => ()
                     }
                 },
-                DecayMethod::Exponential => *alpha *= decay.rate.powi(adjusted_epoch as i32),
-                DecayMethod::Inverse => *alpha /= 1.0 + decay.rate * adjusted_epoch as f64,
+                DecayMethod::Exponential => *alpha *= decay.rate.powi(*epoch as i32),
+                DecayMethod::Inverse => *alpha /= 1.0 + decay.rate * *epoch as f64,
             }            
         }
     }
 
-    pub fn train(&mut self, train_data: &Data, validation_data: &Data, epochs: u32) {       
-        let mut duration = Duration::ZERO;
+    fn early_stop(&mut self, accuracy: f64) -> bool {
+        let EarlyStopping { stability_threshold, patience } = &self.hyper_params.early_stopping;
         
-        for epoch in 0..epochs {          
+        self.performance.push(accuracy);
+
+        if self.performance.len() >= *patience {
+            let recent_performance = &self.performance[(self.performance.len() - patience)..];
+
+            let mut sum_diff = 0.0;
+
+            for index in 1..recent_performance.len() {
+                sum_diff += recent_performance[index] - recent_performance[index - 1];
+            }
+
+            let mean_diff = sum_diff / *patience as f64;
+
+            println!("{:.4?}", mean_diff);
+            return mean_diff <= *stability_threshold
+        }
+
+        false
+    }
+
+    pub fn train(&mut self, train_data: &Data, validation_data: &Data) {       
+        let mut duration = Duration::ZERO;
+        let mut epoch = 0;
+        
+        loop {
             let timestamp = Instant::now();
+            epoch += 1;
         
             for (inputs, targets) in train_data.inputs.chunks(self.hyper_params.batch_size)
                 .zip(train_data.targets.chunks(self.hyper_params.batch_size))
@@ -139,11 +158,18 @@ impl Network {
             
             duration += timestamp.elapsed();
 
+            let (accuracy, cost) = self.test(validation_data);
+            let early_stop = self.early_stop(accuracy);
+
             monitor_training(
-                epochs, epoch, self.hyper_params.learning_rate.alpha, self.test(validation_data), duration
+                epoch, self.hyper_params.learning_rate.alpha, accuracy, cost, duration, early_stop
             );
 
-            self.learning_rate_decay(epoch);
+            if early_stop {
+                break;
+            }
+            
+            self.learning_rate_decay(&mut epoch);
         }
 
         self.set_all_active_dropout_mask();
@@ -174,7 +200,7 @@ impl Network {
             }
         }
 
-        let accuracy = (correct_count / data.targets.len() as f64) * 100.0;
+        let accuracy = correct_count / data.targets.len() as f64;
         let cost = cost / data.inputs.len() as f64;        
 
         (accuracy, cost)

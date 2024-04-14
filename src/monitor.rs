@@ -44,21 +44,21 @@ where
 }
 
 pub fn monitor_training(
-    epochs: u32, epoch: u32, learning_rate: f64, (accuracy, cost): (f64, f64), duration: Duration
+    epoch: u32, learning_rate: f64, accuracy: f64, cost: f64, duration: Duration, early_stop: bool
 ) {
     print_centered(
         format!(
             "[{:0>2?}] LR: {:.2e}, Acc.: {:.2}%, Cost: {:.3}", 
-            epoch + 1,
+            epoch,
             learning_rate,
-            accuracy,
+            accuracy * 100.0,
             cost
         )
     );
 
-    if epoch + 1 == epochs {
+    if early_stop {
         println!();
-        print_centered(format!("Avg. Duration: {:.2?}\n", duration / epochs));
+        print_centered(format!("Avg. Duration: {:.2?}\n", duration / epoch));
     }
 }
 
@@ -145,7 +145,7 @@ pub fn statistics(network: &mut Network, data: &Data) {
     print_subheader("Evaluation");
 
     print_table(
-        format!("Accuracy: {:.2}%", accuracy),
+        format!("Accuracy: {:.2}%", accuracy * 100.0),
         format!("Cost: {:.3?}", avg_cost)
     );
     println!();
