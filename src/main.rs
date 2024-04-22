@@ -9,7 +9,7 @@ use network::state::*;
 use monitor::{ monitor, statistics, showcase };
 
 fn main() {
-    let data = monitor(|| Dataset::new(), "Parsing CSV");
+    let data = monitor(Dataset::new, "Parsing CSV");
 
     let hyper_params = HyperParams {
         composition: vec![data.test.inputs[0].len(), 16, 16, data.test.targets[0].len()], 
@@ -56,5 +56,5 @@ fn main() {
     // let mut network = monitor(|| Network::load(hyper_params), "Loading network parameters");
 
     statistics(&mut network, &data.test);
-    showcase(&mut network, &data.test, 2)
+    showcase(&mut network, &data.test, 2);
 }

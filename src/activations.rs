@@ -1,4 +1,4 @@
-#[allow(dead_code)]
+#![allow(dead_code)]
 
 pub enum ActivationType {
     LeakyRelu,
@@ -33,7 +33,7 @@ impl Activation {
     pub fn get(activations: &[ActivationType]) -> Vec<Self> {
         activations.iter().map(|activation| {            
             match activation {
-                Sigmoid => Activation {
+                Sigmoid => Self {
                     function: Self::sigmoid,
                     derivative: |x| {
                         let sigmoid_x = Self::sigmoid(x);
@@ -41,7 +41,7 @@ impl Activation {
                         sigmoid_x * (1.0 - sigmoid_x)
                     }
                 },
-                Swish => Activation {
+                Swish => Self {
                     function: |x| x * Self::sigmoid(x),
                     derivative: |x| {
                         let sigmoid_x = Self::sigmoid(x);
@@ -49,19 +49,19 @@ impl Activation {
                         x * sigmoid_x + sigmoid_x * (1.0 - sigmoid_x)
                     }
                 },
-                Tanh => Activation {
+                Tanh => Self {
                     function: Self::tanh,
                     derivative: |x| 1.0 - Self::tanh(x).powi(2),
                 },
-                LeakyRelu => Activation {
+                LeakyRelu => Self {
                     function: |x| x.max(0.01 * x),
                     derivative: |x| match x >= 0.0 { true => 1.0, false => 0.01 }
                 },
-                Elu => Activation {
+                Elu => Self {
                     function: |x| match x >= 0.0 { true => x, false => 1.0 * x.exp_m1() },
                     derivative: |x| match x >= 0.0 { true => 1.0, false => 1.0 * x.exp_m1() + 1.0 } 
                 },
-                Gelu => Activation {               
+                Gelu => Self {               
                     function: |x| 0.5 * x * (1.0 + Self::tanh(SQRT_2_OVER_PI * (0.044_715 * x.powi(3) + x))),
                     derivative: |x| {
                         let sub_calculation = SQRT_2_OVER_PI * (0.044_715 * x.powi(3) + x); 

@@ -1,9 +1,9 @@
 use super::state::Network;
 
 impl Network {
-    fn dot_multiply(input: &[f64], factors: &[f64]) -> f64 {
-        input.iter().zip(factors)
-            .map(|(&input, &factor)| input * factor)
+    fn sum_multiplication(factors_1: &[f64], factors_2: &[f64]) -> f64 {
+        factors_1.iter().zip(factors_2)
+            .map(|(&factor_1, &factor_2)| factor_1 * factor_2)
             .sum()
     }
 
@@ -16,7 +16,7 @@ impl Network {
             .zip(self.biases[0].iter()) 
             .zip(self.dropout_mask[0].iter()) 
         {
-            *net_input = Self::dot_multiply(inputs, weights) * dropout_mask + bias;
+            *net_input = Self::sum_multiplication(inputs, weights) * dropout_mask + bias;
             *output = (activations[0].function)(*net_input);
         }
 
@@ -27,7 +27,7 @@ impl Network {
                 .zip(self.dropout_mask[layer].iter())
                 .enumerate() 
             {
-                *net_input = Self::dot_multiply(&self.outputs[layer - 1], weights) * dropout_mask + bias;
+                *net_input = Self::sum_multiplication(&self.outputs[layer - 1], weights) * dropout_mask + bias;
                 self.outputs[layer][neuron] = (activations[layer].function)(*net_input);
             }
         }    
