@@ -58,6 +58,8 @@ pub fn monitor_training(
 
     if early_stop {
         println!();
+        print_centered(String::from("Early Stopping"));
+        println!();
         print_centered(format!("Avg. Duration: {:.2?}\n", duration / epoch));
     }
 }
@@ -67,7 +69,10 @@ pub fn statistics(network: &mut Network, data: &Data) {
 
     print_header("Neural Network Statistics");
 
-    let HyperParams { composition, regularization, learning_rate, optimizer, batch_size, .. } = &network.hyper_params;
+    let HyperParams { 
+        composition, regularization, learning_rate, optimizer, batch_size, early_stopping, ..
+    } = &network.hyper_params;
+    
     let LearningRate { alpha, decay, restart } = learning_rate;
 
     print_subheader("Composition");
@@ -100,7 +105,7 @@ pub fn statistics(network: &mut Network, data: &Data) {
     print_subheader("Adam Optimizer");
 
     print_table(
-        format!("Alpha: {:e}", alpha),
+        format!("Alpha: {:.2e}", alpha),
         format!("Epsilon: {:e}", optimizer.epsilon)
     );
     print_table(
@@ -121,7 +126,7 @@ pub fn statistics(network: &mut Network, data: &Data) {
     
     print_table(
         format!("Input Layer: {}%", regularization.dropout_rate.input_layer * 100.0),
-        format!("Hidden Layers {}%", regularization.dropout_rate.hidden_layer * 100.0)
+        format!("Hidden Layers: {}%", regularization.dropout_rate.hidden_layer * 100.0)
     );
     println!();
     
@@ -140,6 +145,13 @@ pub fn statistics(network: &mut Network, data: &Data) {
             format!("Restart Value: {:e}", restart.alpha)
         );
     }
+    println!();
+    
+    print_subheader("Early Stopping");
+    print_table(
+        format!("Patience: {}", early_stopping.patience),
+        format!("Stability Threshold: {:e}", early_stopping.stability_threshold)
+    );
     println!();
     
     print_subheader("Evaluation");
