@@ -79,8 +79,10 @@ impl Network {
         }
     }
 
-    fn learning_rate_decay(&mut self, epoch: &mut u32) {
+    fn learning_rate_decay(&mut self, epoch: &u32) {
         let LearningRate { alpha, decay, restart } = &mut self.hyper_params.learning_rate;
+
+        let mut adjusted_epoch = *epoch;
 
         if let Some(restart) = &restart {
             match *epoch % restart.interval == 0 {
@@ -91,19 +93,19 @@ impl Network {
                 false => ()
             }   
 
-            *epoch %= restart.interval;
+            adjusted_epoch = epoch % restart.interval;
         }
         
         if let Some(decay) = &decay {
             match decay.method {
                 DecayMethod::Step(decay_step) => {
-                    match *epoch % decay_step == 0 {
+                    match adjusted_epoch % decay_step == 0 {
                         true => *alpha *= decay.rate,
                         false => ()
                     }
                 },
-                DecayMethod::Exponential => *alpha *= decay.rate.powi(*epoch as i32),
-                DecayMethod::Inverse => *alpha /= 1.0 + decay.rate * *epoch as f64,
+                DecayMethod::Exponential => *alpha *= decay.rate.powi(adjusted_epoch as i32),
+                DecayMethod::Inverse => *alpha /= 1.0 + decay.rate * adjusted_epoch as f64,
             }            
         }
     }
@@ -198,7 +200,7 @@ impl Network {
                 break;
             }
             
-            self.learning_rate_decay(&mut epoch);
+            self.learning_rate_decay(&epoch);
         }
 
         self.set_all_active_dropout_mask();

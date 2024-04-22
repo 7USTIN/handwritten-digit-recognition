@@ -43,7 +43,7 @@ fn main() {
         },
         batch_size: 4,
         early_stopping: EarlyStopping {
-            stability_threshold: 0.005,
+            stability_threshold: 5e-3,
             patience: 15
         }
     };
