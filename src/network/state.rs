@@ -163,9 +163,9 @@ impl Network {
 
         let mut dropout_mask = Self::zeros_2d_vec(composition, 0);
 
-        if let Some(output_layer) = dropout_mask.last_mut() {
-            for probability in output_layer.iter_mut() {
-                *probability = 1.0;
+        if let Some(output_layer_mask) = dropout_mask.last_mut() {
+            for mask in output_layer_mask.iter_mut() {
+                *mask = 1.0;
             }
         }
 

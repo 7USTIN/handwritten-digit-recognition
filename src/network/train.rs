@@ -11,13 +11,18 @@ impl Network {
         
         let mut rng = thread_rng();
 
-        for dropout in self.dropout_mask[0].iter_mut() {
-            *dropout = rng.gen_bool(1.0 - dropout_rate.input_layer) as u16 as f64;
+        let input_layer_factor = 1.0 / (1.0 - dropout_rate.input_layer);
+        let hidden_layer_factor = 1.0 / (1.0 - dropout_rate.hidden_layer);
+
+        for mask in self.dropout_mask[0].iter_mut() {
+            *mask = rng.gen_bool(1.0 - dropout_rate.input_layer) as u16 as f64 * input_layer_factor;
         }
 
         for layer in 1..self.dropout_mask.len() - 1 {
             for neuron in 0..self.dropout_mask[layer].len() {
-                self.dropout_mask[layer][neuron] = rng.gen_bool(1.0 - dropout_rate.hidden_layer) as u16 as f64;
+                self.dropout_mask[layer][neuron] = 
+                    rng.gen_bool(1.0 - dropout_rate.hidden_layer) as u16 as f64 * 
+                    hidden_layer_factor;
             }
         }
     }
@@ -30,27 +35,6 @@ impl Network {
         }
     }
 
-    fn inverse_dropout(&mut self) {
-        let Regularization { dropout_rate, .. } = &self.hyper_params.regularization;
-        
-        for (layer, weights) in self.weights.iter_mut().enumerate() {
-            let factor = match layer {
-                0 => 1.0 / (1.0 - dropout_rate.input_layer),
-                _ => 1.0 / (1.0 - dropout_rate.hidden_layer),
-            };
-
-            for weights in weights.iter_mut() {
-                for weight in weights.iter_mut() {
-                    *weight *= factor;
-                }
-            }
-
-            for bias in self.biases[layer].iter_mut() {
-                *bias *= factor;
-            }
-        }
-    }
-    
     fn batch_update(&mut self, chunk_size: f64) {
         for (weights, weight_updates) in self.weights.iter_mut()
             .zip(self.batch.weight_updates.iter_mut())
@@ -169,7 +153,7 @@ impl Network {
         loop {
             let timestamp = Instant::now();
             epoch += 1;
-        
+
             for (inputs, targets) in train_data.inputs.chunks(self.hyper_params.batch_size)
                 .zip(train_data.targets.chunks(self.hyper_params.batch_size))
             {                
@@ -186,6 +170,8 @@ impl Network {
                 
                 self.batch_update(inputs.len() as f64);
             }
+
+            self.set_all_active_dropout_mask();
             
             duration += timestamp.elapsed();
 
@@ -202,8 +188,5 @@ impl Network {
             
             self.learning_rate_decay(&epoch);
         }
-
-        self.set_all_active_dropout_mask();
-        self.inverse_dropout();
     }
 }

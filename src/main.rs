@@ -20,8 +20,8 @@ fn main() {
                 biases: ElasticNetRegularizer { l1: 0.0, l2: 0.0 }
             },
             dropout_rate: DropoutRate {
-                input_layer: 0.0,
-                hidden_layer: 0.0
+                input_layer: 2e-3,
+                hidden_layer: 5e-3
             },
             max_norm_constraint: 8.0
         },
