@@ -40,7 +40,8 @@ fn main() {
             }),
             decay: Some(Decay {
                 method: DecayMethod::Exponential,
-                rate: 0.9
+                rate: 0.9,
+                step: 2
             }),
         },
         optimizer: AdamHyperParams {

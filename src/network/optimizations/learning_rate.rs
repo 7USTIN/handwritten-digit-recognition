@@ -4,7 +4,7 @@ use crate::network::state::Network;
 
 #[derive(Debug)]
 pub enum DecayMethod {
-    Step(u32),
+    Step,
     Exponential,
     Inverse
 }
@@ -13,21 +13,20 @@ use DecayMethod::*;
 
 pub struct Decay {
     pub method: DecayMethod,
-    pub rate: f64    
+    pub rate: f64,
+    pub step: u32    
 }
 
 impl Decay {
     fn decay(decay: &Option<Self>, alpha: &mut f64, adjusted_epoch: u32) {
         if let Some(decay) = decay {
-            match decay.method {
-                Step(decay_step) => {
-                    if adjusted_epoch % decay_step == 0 {
-                        *alpha *= decay.rate;
-                    }
-                },
-                Exponential => *alpha *= decay.rate.powi(adjusted_epoch as i32),
-                Inverse => *alpha /= 1.0 + decay.rate * adjusted_epoch as f64,
-            }            
+            if adjusted_epoch % decay.step == 0 {
+                match decay.method {
+                    Step => *alpha *= decay.rate,
+                    Exponential => *alpha *= decay.rate.powi(adjusted_epoch as i32),
+                    Inverse => *alpha /= 1.0 + decay.rate * adjusted_epoch as f64,
+                }            
+            }
         }        
     }
 }
