@@ -46,9 +46,13 @@ where
 pub fn monitor_training(
     epoch: u32, learning_rate: f64, accuracy: f64, cost: f64, duration: Duration, early_stop: bool
 ) {
+    if epoch == 1 {
+        print_centered(String::from("Epochs:\n"));        
+    }
+    
     print_centered(
         format!(
-            "[{:0>2?}] LR: {:.2e}, Acc.: {:.2}%, Cost: {:.3}", 
+            "[{:0>2?}] LR: {:.2e}, Acc.: {:0>2.2}%, Cost: {:.3}", 
             epoch,
             learning_rate,
             accuracy * 100.0,
