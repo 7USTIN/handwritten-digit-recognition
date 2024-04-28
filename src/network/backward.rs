@@ -66,9 +66,8 @@ impl Network {
                     / (corrected_moment_2.sqrt() 
                     + optimizer.epsilon);
 
-                match current_weight_l2_norm > regularization.max_norm_constraint {
-                    true => *weight_update *= regularization.max_norm_constraint / current_weight_l2_norm,
-                    false => ()
+                if current_weight_l2_norm > regularization.max_norm_constraint {
+                    *weight_update *= regularization.max_norm_constraint / current_weight_l2_norm
                 }
             }
 

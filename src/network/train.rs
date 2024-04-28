@@ -27,7 +27,7 @@ impl Network {
                     self.optimizer.iteration += 1;
 
                     self.forward(inputs);
-                    self.backward(inputs, targets);                      
+                    self.backward(inputs, targets);             
                 }                
                 
                 Batch::update(self, inputs.len() as f64);

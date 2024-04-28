@@ -21,9 +21,8 @@ impl Decay {
         if let Some(decay) = decay {
             match decay.method {
                 Step(decay_step) => {
-                    match adjusted_epoch % decay_step == 0 {
-                        true => *alpha *= decay.rate,
-                        false => ()
+                    if adjusted_epoch % decay_step == 0 {
+                        *alpha *= decay.rate;
                     }
                 },
                 Exponential => *alpha *= decay.rate.powi(adjusted_epoch as i32),
@@ -41,11 +40,8 @@ pub struct Restart {
 impl Restart {
     fn restart(restart: &Option<Self>, alpha: &mut f64, epoch: &u32) {
         if let Some(restart) = &restart {
-            match *epoch % restart.interval == 0 {
-                true => {
-                    *alpha = restart.alpha;
-                },
-                false => ()
+            if *epoch % restart.interval == 0 {
+                *alpha = restart.alpha;
             }   
         }        
     }
