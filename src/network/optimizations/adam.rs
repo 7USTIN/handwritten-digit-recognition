@@ -21,6 +21,7 @@ impl Moment {
     }
 }
 
+// 'impl Network' because 'impl Moment' significantly reduces performance during backpropagation
 impl Network {   
     pub fn compute_moments(
         moment_1: &mut f64, moment_2: &mut f64, optimizer: &AdamHyperParams, gradient: &f64, iteration: &i32
@@ -28,6 +29,7 @@ impl Network {
         *moment_1 = optimizer.beta_1 * *moment_1 + (1.0 - optimizer.beta_1) * gradient;
         *moment_2 = optimizer.beta_2 * *moment_2 + (1.0 - optimizer.beta_2) * gradient.powi(2);
 
+        // Bias-corrected moments
         (
             *moment_1 / (1.0 - optimizer.beta_1.powi(*iteration)),
             *moment_2 / (1.0 - optimizer.beta_2.powi(*iteration))

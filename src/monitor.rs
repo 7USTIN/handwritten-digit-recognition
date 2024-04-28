@@ -211,12 +211,12 @@ fn print_predictions(network: &mut Network, data: &Data, data_index: usize) {
 
     for (number, output) in predictions {            
         match (0.0..10.0).contains(&output) {
-            true => print_centered(format!("{}:  {:.2}%", number, output)),
-            false => print_centered(format!("{}: {:.2}%", number, output)),
+            true => print_centered(format!("{}:  {:.2}%", number, output)), // Two spaces 
+            false => print_centered(format!("{}: {:.2}%", number, output)) // One space
         } 
     }
 
-    println!();    
+    println!();
 }
 
 pub fn showcase(network: &mut Network, data: &Data, num_tests: usize) {

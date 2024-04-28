@@ -1,13 +1,15 @@
 use super::network::state::Vec2D;
 
-use std::{ fs::File, io::{ BufReader, BufRead} };
+use std::{ fs::File, io::{ BufReader, BufRead } };
 
+// 'inputs' consists of a list of handwritten digits
+// A digit is represented by 784 grayscale values ranging from 0 (black) - 255 (white)
 pub struct Data {
     pub inputs: Vec2D,
     pub targets: Vec2D
 }
 
-impl Data {
+impl Data { 
     pub fn one_hot_encode(num: usize) -> Vec<f64> {
         let mut vec = vec![0.0; 10];
         vec[num] = 1.0;
@@ -31,9 +33,10 @@ impl Data {
 
         let inputs: Vec2D = lines
             .iter()
-            .map(|line| line[1..].iter().map(|&value| value / 255.0).collect())
+            .map(|line| line[1..].iter().map(|&value| value / 255.0).collect()) // Normalize grayscale values
             .collect();
         
+        // One-hot encode targets to allow comparison between target output and actual output.
         let targets: Vec2D = lines.iter().map(|line| Self::one_hot_encode(line[0] as usize)).collect();
 
         Self {
@@ -50,9 +53,10 @@ pub struct Dataset {
 }
 
 impl Dataset {
-    pub fn new() -> Self {        
+    pub fn new() -> Self {
         let training_data = Data::parse_csv("train");
 
+        // MNIST Dataset does not provide a validation set, which is why we split the training set 
         let total_lines = training_data.targets.len();
         let validation_start_index = (total_lines as f64 * 0.8) as usize;
 

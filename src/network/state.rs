@@ -31,9 +31,9 @@ pub struct Network {
     pub outputs: Vec2D,
     pub costs: Vec2D,
     pub optimizer: Adam,
-    pub dropout_mask: Vec2D,
+    pub dropout_mask: Vec2D, // Mask used to drop out certain neurons
     pub batch: Batch,
-    pub performance: Vec<f64>,
+    pub performance: Vec<f64>, // Track network's accuracy, used for early stopping
     pub hyper_params: HyperParams,
 }
 

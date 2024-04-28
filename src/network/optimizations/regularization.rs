@@ -12,6 +12,8 @@ pub struct ElasticNetRegularization {
     pub biases: ElasticNetRegularizer    
 }
 
+// 'impl Network' because 'impl ElasticNetRegularization' 
+// significantly reduces performance during backpropagation
 impl Network {
     pub fn elastic_net_regularization(
         ElasticNetRegularizer { l1, l2 }: &ElasticNetRegularizer, value: f64
@@ -29,6 +31,7 @@ impl Dropout {
     pub fn init_mask(composition: &[usize]) -> Vec2D {
         let mut dropout_mask = utils::zeros_2d_vec(composition, 0);
         
+        // Output layer is never dropped out
         if let Some(output_layer_mask) = dropout_mask.last_mut() {
             for mask in output_layer_mask.iter_mut() {
                 *mask = 1.0;
@@ -43,6 +46,8 @@ impl Dropout {
         
         let mut rng = thread_rng();
 
+        // Apply inverse dropout while training, multiplied with binary dropout 
+        // mask to save on conditional statements during forwardpropagation
         let input_layer_factor = 1.0 / (1.0 - dropout_rate.input_layer);
         let hidden_layer_factor = 1.0 / (1.0 - dropout_rate.hidden_layer);
 
@@ -59,6 +64,7 @@ impl Dropout {
         }
     }
 
+    // Enable all neurons, used before evaluating / testing the network
     pub fn set_all_active_mask(network: &mut Network) {
         for layer in 0..network.dropout_mask.len() - 1 {
             for neuron in 0..network.dropout_mask[layer].len() {
