@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
-use crate::dataset::Data;
-use super::network::state::{ Network, HyperParams, LearningRate };
+use crate::{ dataset::Data, network::optimizations::learning_rate::LearningRate };
+use super::network::state::{ Network, HyperParams };
 
 use std::time::{ Instant, Duration };
 use rand::{ thread_rng, seq::SliceRandom };

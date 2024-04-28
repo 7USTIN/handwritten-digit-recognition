@@ -1,16 +1,6 @@
-use super::state::{ Network, HyperParams, ElasticNetRegularizer };
+use super::{state::{ Network, HyperParams }, optimizations::regularization::Regularization };
 
 impl Network {
-    fn regularization(ElasticNetRegularizer { l1, l2 }: &ElasticNetRegularizer, value: f64) -> f64 {       
-        l1 * value.abs() + l2 * value.powi(2)
-    }
-
-    fn compute_l2_norm(weights: &[f64]) -> f64 {
-        let sum_of_squares = weights.iter().map(|&w| w.powi(2)).sum::<f64>();
-        
-        sum_of_squares.sqrt()
-    }
-
     fn compute_costs(&mut self, targets: &[f64]) {
         let output_layer = self.outputs.len() - 1;
 
@@ -52,7 +42,7 @@ impl Network {
             .zip(self.batch.bias_updates[layer].iter_mut())
         {
             let slope = (activations[layer].derivative)(*net_input);
-            let current_weight_l2_norm = Self::compute_l2_norm(weights);
+            let current_weight_l2_norm = Regularization::compute_l2_norm(weights);
                        
             for ((((weight, prev_layer_output), moment_1_weight), moment_2_weight), weight_update) in weights.iter_mut()
                 .zip(prev_layer_output)
@@ -61,17 +51,20 @@ impl Network {
                 .zip(weight_updates.iter_mut())
             {
                 let gradient = 
-                    (cost + Self::regularization(&regularization.elastic_net.weights, *weight)) *
+                    (cost + Self::elastic_net_regularization(&regularization.elastic_net.weights, *weight)) *
                     slope *
                     prev_layer_output;
 
-                *moment_1_weight = optimizer.beta_1 * *moment_1_weight + (1.0 - optimizer.beta_1) * gradient;
-                *moment_2_weight = optimizer.beta_2 * *moment_2_weight + (1.0 - optimizer.beta_2) * gradient.powi(2);
 
-                let corrected_moment_1_weight = *moment_1_weight / (1.0 - optimizer.beta_1.powi(self.optimizer.iteration));
-                let corrected_moment_2_weight = *moment_2_weight / (1.0 - optimizer.beta_2.powi(self.optimizer.iteration));
+                let (corrected_moment_1, corrected_moment_2) = Self::compute_moments(
+                    moment_1_weight, moment_2_weight, optimizer, &gradient, &self.optimizer.iteration
+                );
 
-                *weight_update += *weight - learning_rate.alpha * corrected_moment_1_weight / (corrected_moment_2_weight.sqrt() + optimizer.epsilon);
+                *weight_update += *weight 
+                    - learning_rate.alpha 
+                    * corrected_moment_1 
+                    / (corrected_moment_2.sqrt() 
+                    + optimizer.epsilon);
 
                 match current_weight_l2_norm > regularization.max_norm_constraint {
                     true => *weight_update *= regularization.max_norm_constraint / current_weight_l2_norm,
@@ -80,16 +73,19 @@ impl Network {
             }
 
             let gradient = 
-                (cost + Self::regularization(&regularization.elastic_net.biases, *bias)) *
+                (cost + Self::elastic_net_regularization(&regularization.elastic_net.biases, *bias)) *
                 slope;
 
-            *moment_1_bias = optimizer.beta_1 * *moment_1_bias + (1.0 - optimizer.beta_1) * gradient;
-            *moment_2_bias = optimizer.beta_2 * *moment_2_bias + (1.0 - optimizer.beta_2) * gradient.powi(2);
 
-            let corrected_moment_1_bias = *moment_1_bias / (1.0 - optimizer.beta_1.powi(self.optimizer.iteration));
-            let corrected_moment_2_bias = *moment_2_bias / (1.0 - optimizer.beta_2.powi(self.optimizer.iteration));
+            let (corrected_moment_1, corrected_moment_2) = Self::compute_moments(
+                moment_1_bias, moment_2_bias, optimizer, &gradient, &self.optimizer.iteration
+            );
 
-            *bias_update += *bias - learning_rate.alpha * corrected_moment_1_bias / (corrected_moment_2_bias.sqrt() + optimizer.epsilon);
+            *bias_update += *bias 
+                - learning_rate.alpha
+                * corrected_moment_1
+                / (corrected_moment_2.sqrt()
+                + optimizer.epsilon);
         }        
     }
     

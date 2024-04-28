@@ -1,11 +1,18 @@
-mod activations;
 mod dataset;
 mod network;
 mod monitor;
 
 use dataset::Dataset;
-use activations::{ Activation, ActivationType::* };
-use network::state::*;
+use network::{ 
+    optimizations::{ 
+        activations::{ Activation, ActivationType::* },
+        regularization::{ Regularization, ElasticNetRegularization, ElasticNetRegularizer, Dropout },
+        learning_rate::{ LearningRate, Restart, Decay, DecayMethod },
+        adam::AdamHyperParams,
+        early_stopping::EarlyStopping
+    }, 
+    state::{ Network, HyperParams } 
+};
 use monitor::{ monitor, statistics, showcase };
 
 fn main() {
@@ -19,7 +26,7 @@ fn main() {
                 weights: ElasticNetRegularizer { l1: 1e-7, l2:  1e-6 },
                 biases: ElasticNetRegularizer { l1: 0.0, l2: 0.0 }
             },
-            dropout_rate: DropoutRate {
+            dropout_rate: Dropout {
                 input_layer: 2e-3,
                 hidden_layer: 5e-3
             },
@@ -27,11 +34,11 @@ fn main() {
         },
         learning_rate: LearningRate {
             alpha: 0.01,
-            restart: Some(LearningRateRestart {
+            restart: Some(Restart {
                 interval: 10,
-                alpha: 0.001
+                alpha: 1e-3
             }),
-            decay: Some(LearningRateDecay {
+            decay: Some(Decay {
                 method: DecayMethod::Exponential,
                 rate: 0.9
             }),

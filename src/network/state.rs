@@ -1,66 +1,18 @@
 #![allow(dead_code)]
 
-use crate::activations::Activation;
+use crate::network::utils;
+use super::optimizations::{ 
+    activations::Activation,
+    regularization::{ Regularization, Dropout },
+    learning_rate::LearningRate,
+    adam::{ AdamHyperParams, Adam },
+    early_stopping::EarlyStopping,
+    batch::Batch
+};
 
-use rand::{ Rng, rngs::ThreadRng };
 use std::{ fs::File, io::{ BufWriter, Write, BufReader, BufRead} };
 
 pub type Vec2D = Vec<Vec<f64>>;
-
-pub struct EarlyStopping {
-    pub stability_threshold: f64,
-    pub patience: usize
-}
-
-pub struct AdamHyperParams {
-    pub beta_1: f64,
-    pub beta_2: f64,
-    pub epsilon: f64
-}
-
-#[derive(Debug)]
-pub enum DecayMethod {
-    Step(u32),
-    Exponential,
-    Inverse
-}
-
-pub struct LearningRateDecay {
-    pub method: DecayMethod,
-    pub rate: f64    
-}
-
-pub struct LearningRateRestart {
-    pub interval: u32,
-    pub alpha: f64,
-}
-
-pub struct LearningRate {
-    pub alpha: f64,
-    pub restart: Option<LearningRateRestart>,
-    pub decay: Option<LearningRateDecay>
-}
-
-pub struct ElasticNetRegularizer {
-    pub l1: f64,
-    pub l2: f64
-}
-
-pub struct ElasticNetRegularization {
-    pub weights: ElasticNetRegularizer,
-    pub biases: ElasticNetRegularizer    
-}
-
-pub struct DropoutRate {
-    pub input_layer: f64,
-    pub hidden_layer: f64,
-}
-
-pub struct Regularization {
-    pub elastic_net: ElasticNetRegularization,
-    pub dropout_rate: DropoutRate,
-    pub max_norm_constraint: f64
-}
 
 pub struct HyperParams {
     pub composition: Vec<usize>,
@@ -72,30 +24,13 @@ pub struct HyperParams {
     pub early_stopping: EarlyStopping
 }
 
-#[derive(Clone)]
-pub struct Moment {
-    pub weights: Vec<Vec2D>,
-    pub biases: Vec2D
-}
-
-pub struct AdamState {
-    pub iteration: i32,
-    pub moment_1: Moment,
-    pub moment_2: Moment
-}
-
-pub struct Batch {
-    pub weight_updates: Vec<Vec2D>,
-    pub bias_updates: Vec2D
-}
-
 pub struct Network {
     pub weights: Vec<Vec2D>,
     pub biases: Vec2D,
     pub net_inputs: Vec2D,
     pub outputs: Vec2D,
     pub costs: Vec2D,
-    pub optimizer: AdamState,
+    pub optimizer: Adam,
     pub dropout_mask: Vec2D,
     pub batch: Batch,
     pub performance: Vec<f64>,
@@ -103,46 +38,6 @@ pub struct Network {
 }
 
 impl Network {   
-    fn random_3d_vec(rng: &mut ThreadRng, composition: &[usize]) -> Vec<Vec2D> {
-        let mut random_3d_vec = Vec::with_capacity(composition.len() - 1);
-        
-        for index in 1..composition.len() {
-            random_3d_vec.push(
-                (0..composition[index])
-                    .map(|_| (0..composition[index - 1]).map(|_| rng.gen_range(-1.0..=1.0)).collect())
-                    .collect::<Vec2D>()            
-            );
-        }
-
-        random_3d_vec
-    }
-
-    fn zeros_2d_vec(composition: &[usize], skip: usize) -> Vec2D {
-        let mut zeros_2d_vec = Vec::with_capacity(composition.len() - 1);
-
-        for len in composition.iter().skip(skip) {
-            zeros_2d_vec.push(vec![0.0; *len]);
-        }
-
-        zeros_2d_vec
-    }
-
-    fn zeros_3d_vec(composition: &[usize]) -> Vec<Vec2D> {        
-        let mut zeros_3d_vec = Vec::with_capacity(composition.len() - 1);
-        
-        for index in 1..composition.len() {
-            let mut layer = Vec::with_capacity(composition[index]);
-
-            for _ in 0..composition[index] {
-                layer.push(vec![0.0; composition[index - 1]]);
-            }
-
-            zeros_3d_vec.push(layer);
-        }
-
-        zeros_3d_vec
-    }
-
     pub fn new(hyper_params: HyperParams) -> Self {
         let composition = &hyper_params.composition;
 
@@ -152,22 +47,8 @@ impl Network {
             "ERROR: wrong number of activation functions"
         );
 
-        let zeros_2d_vec = Self::zeros_2d_vec(composition, 1);
-        let zeros_3d_vec = Self::zeros_3d_vec(composition);
-        let random_3d_vec = Self::random_3d_vec(&mut rand::thread_rng(), composition);
-
-        let moment = Moment {
-            weights: zeros_3d_vec.clone(),
-            biases: zeros_2d_vec.clone()
-        };
-
-        let mut dropout_mask = Self::zeros_2d_vec(composition, 0);
-
-        if let Some(output_layer_mask) = dropout_mask.last_mut() {
-            for mask in output_layer_mask.iter_mut() {
-                *mask = 1.0;
-            }
-        }
+        let zeros_2d_vec = utils::zeros_2d_vec(composition, 1);
+        let random_3d_vec = utils::random_3d_vec(&mut rand::thread_rng(), composition);
 
         Self {
             weights: random_3d_vec,
@@ -175,16 +56,9 @@ impl Network {
             net_inputs: zeros_2d_vec.clone(),
             outputs: zeros_2d_vec.clone(),
             costs: zeros_2d_vec.clone(),
-            optimizer: AdamState {
-                iteration: 0,
-                moment_1: moment.clone(),
-                moment_2: moment,
-            },
-            dropout_mask,
-            batch: Batch {
-                weight_updates:  zeros_3d_vec,
-                bias_updates: zeros_2d_vec,
-            },
+            optimizer: Adam::new(composition),
+            dropout_mask: Dropout::init_mask(composition),
+            batch: Batch::new(composition),
             performance: Vec::new(),
             hyper_params,
         }
